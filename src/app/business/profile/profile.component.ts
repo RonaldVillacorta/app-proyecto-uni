@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../shared/services/user.service';
+import { AuthService } from '../../shared/services/auth.service';
 import { VentaService } from '../../shared/services/venta.service';
 import { CreditoService } from '../../shared/services/credito.service';
 import { PagoService } from '../../shared/services/pago.service';
@@ -31,10 +32,18 @@ export default class ProfileComponent implements OnInit {
 
   loading = true;
   error = '';
-  activeTab = 'profile'; // Pestaña activa por defecto: 'profile', 'activity', 'edit'
+  activeTab = 'profile'; // Pestaña activa: 'profile', 'activity', 'edit', 'sbs'
   editProfileForm: FormGroup;
   editMode = false;
   saveSuccess = false;
+
+  // Variables SBS Document AI
+  selectedSbsFile: File | null = null;
+  sbsFilePreview: string | null = null;
+  sbsFileIsPdf = false;
+  sbsAnalyzing = false;
+  sbsAnalysisResult: any = null;
+  sbsUploadError = '';
 
   // Estadísticas calculadas
   totalCompras = 0;
@@ -47,6 +56,7 @@ export default class ProfileComponent implements OnInit {
 
   constructor(
     private userService: UserService,
+    public authService: AuthService,
     private ventaService: VentaService,
     private creditoService: CreditoService,
     private pagoService: PagoService,
@@ -97,6 +107,26 @@ export default class ProfileComponent implements OnInit {
 
         // Cargar datos relacionados
         this.loadUserTransactions(profile.id);
+
+        // Inicializar datos SBS si ya existen previamente
+        if (this.userProfile.sbsCalificacion) {
+          this.sbsAnalysisResult = {
+            calificacion: this.userProfile.sbsCalificacion,
+            deudaTotal: this.userProfile.sbsDeudaTotal || 0,
+            entidades: this.userProfile.sbsEntidades
+              ? this.userProfile.sbsEntidades.split(',').map((e: string) => e.trim()).filter((e: string) => e.length > 0)
+              : [],
+            scoreCrediticio: this.userProfile.sbsScore || 90,
+            limiteSugerido: this.userProfile.limiteCredito || 500,
+            semaforo: this.userProfile.sbsSemaforo || 'VERDE',
+            nivelRiesgo: (this.userProfile.sbsScore >= 75) ? 'Bajo' : ((this.userProfile.sbsScore >= 50) ? 'Medio' : 'Alto'),
+            documentoUrl: this.userProfile.sbsDocumentoUrl,
+            fechaEvaluacion: this.userProfile.sbsFechaEvaluacion
+              ? new Date(this.userProfile.sbsFechaEvaluacion).toLocaleString()
+              : '',
+            recomendacion: (this.userProfile.sbsScore >= 75) ? 'Aprobado para fiar' : ((this.userProfile.sbsScore >= 50) ? 'Fiar con límite' : 'Denegar crédito')
+          };
+        }
       },
       error: (error) => {
         console.error('Error al cargar perfil:', error);
@@ -502,6 +532,117 @@ export default class ProfileComponent implements OnInit {
       error: (err) => {
         console.error('Error al cargar detalles:', err);
         (Swal as any).fire('Error', 'No se pudieron obtener los productos de la compra', 'error');
+      }
+    });
+  }
+
+  isClient(): boolean {
+    return !this.authService.isAdmin();
+  }
+
+  onSbsFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.processSelectedSbsFile(file);
+    }
+  }
+
+  onSbsFileDropped(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.processSelectedSbsFile(file);
+    }
+  }
+
+  onSbsDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  processSelectedSbsFile(file: File): void {
+    this.sbsUploadError = '';
+    const validExtensions = ['pdf', 'png', 'jpg', 'jpeg'];
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!validExtensions.includes(extension)) {
+      this.sbsUploadError = 'Formato no admitido. Por favor selecciona un archivo PDF o una imagen (PNG, JPG, JPEG).';
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      this.sbsUploadError = 'El archivo supera el tamaño máximo permitido de 15MB.';
+      return;
+    }
+
+    this.selectedSbsFile = file;
+    this.sbsFileIsPdf = extension === 'pdf';
+
+    if (!this.sbsFileIsPdf) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.sbsFilePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.sbsFilePreview = null;
+    }
+  }
+
+  clearSbsFile(): void {
+    this.selectedSbsFile = null;
+    this.sbsFilePreview = null;
+    this.sbsFileIsPdf = false;
+    this.sbsUploadError = '';
+  }
+
+  uploadAndAnalyzeSbsReport(): void {
+    if (!this.selectedSbsFile) {
+      return;
+    }
+
+    this.sbsAnalyzing = true;
+    this.sbsUploadError = '';
+
+    this.userService.subirReporteSbs(this.selectedSbsFile).subscribe({
+      next: (resultado) => {
+        this.sbsAnalyzing = false;
+        this.sbsAnalysisResult = resultado;
+        if (this.userProfile) {
+          this.userProfile.sbsCalificacion = resultado.calificacion;
+          this.userProfile.sbsDeudaTotal = resultado.deudaTotal;
+          this.userProfile.sbsScore = resultado.scoreCrediticio;
+          this.userProfile.sbsSemaforo = resultado.semaforo;
+          this.userProfile.limiteCredito = resultado.limiteSugerido;
+          this.userProfile.sbsFechaEvaluacion = resultado.fechaEvaluacion;
+          this.userProfile.sbsDocumentoUrl = resultado.documentoUrl;
+        }
+
+        Swal.fire({
+          title: '¡Reporte SBS Analizado con IA!',
+          text: `Calificación detectada: ${resultado.calificacion}. Nuevo límite de fiado asignado: S/. ${parseFloat(resultado.limiteSugerido).toFixed(2)}`,
+          icon: 'success',
+          background: '#24130C',
+          color: '#FAF7F2',
+          iconColor: '#C59B6D',
+          confirmButtonColor: '#C59B6D'
+        });
+      },
+      error: (err) => {
+        this.sbsAnalyzing = false;
+        console.error('Error al analizar reporte SBS:', err);
+        const errMsg = err?.error?.error || 'No se pudo procesar el reporte SBS. Verifica que el archivo sea legible.';
+        this.sbsUploadError = errMsg;
+        Swal.fire({
+          title: 'Error de Análisis',
+          text: errMsg,
+          icon: 'error',
+          background: '#24130C',
+          color: '#FAF7F2',
+          iconColor: '#E74C3C',
+          confirmButtonColor: '#C59B6D'
+        });
       }
     });
   }

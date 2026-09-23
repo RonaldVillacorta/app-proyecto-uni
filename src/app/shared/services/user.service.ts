@@ -83,4 +83,13 @@ export class UserService {
       })
     );
   }
+
+  /**
+   * Sube y procesa el reporte de deudas SBS con IA multimodal (PDF o Imagen).
+   */
+  subirReporteSbs(archivo: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    return this.http.post<any>(`${this.url}/profile/reporte-sbs`, formData);
+  }
 }
