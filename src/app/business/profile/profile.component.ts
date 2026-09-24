@@ -110,21 +110,27 @@ export default class ProfileComponent implements OnInit {
 
         // Inicializar datos SBS si ya existen previamente
         if (this.userProfile.sbsCalificacion) {
+          const score = (this.userProfile.sbsScore !== null && this.userProfile.sbsScore !== undefined) ? this.userProfile.sbsScore : 0;
+          const limite = (this.userProfile.limiteCredito !== null && this.userProfile.limiteCredito !== undefined) ? this.userProfile.limiteCredito : 0;
+          const semaforo = this.userProfile.sbsSemaforo || (score >= 75 ? 'VERDE' : (score >= 50 ? 'AMARILLO' : 'ROJO'));
+          const nivelRiesgo = semaforo === 'ROJO' || score < 50 ? 'Alto' : (score < 75 ? 'Medio' : 'Bajo');
+          const recomendacion = semaforo === 'ROJO' || score < 50 ? 'Denegar crédito' : (score < 75 ? 'Fiar con límite' : 'Aprobado para fiar');
+
           this.sbsAnalysisResult = {
             calificacion: this.userProfile.sbsCalificacion,
             deudaTotal: this.userProfile.sbsDeudaTotal || 0,
             entidades: this.userProfile.sbsEntidades
               ? this.userProfile.sbsEntidades.split(',').map((e: string) => e.trim()).filter((e: string) => e.length > 0)
               : [],
-            scoreCrediticio: this.userProfile.sbsScore || 90,
-            limiteSugerido: this.userProfile.limiteCredito || 500,
-            semaforo: this.userProfile.sbsSemaforo || 'VERDE',
-            nivelRiesgo: (this.userProfile.sbsScore >= 75) ? 'Bajo' : ((this.userProfile.sbsScore >= 50) ? 'Medio' : 'Alto'),
+            scoreCrediticio: score,
+            limiteSugerido: limite,
+            semaforo: semaforo,
+            nivelRiesgo: nivelRiesgo,
             documentoUrl: this.userProfile.sbsDocumentoUrl,
             fechaEvaluacion: this.userProfile.sbsFechaEvaluacion
               ? new Date(this.userProfile.sbsFechaEvaluacion).toLocaleString()
               : '',
-            recomendacion: (this.userProfile.sbsScore >= 75) ? 'Aprobado para fiar' : ((this.userProfile.sbsScore >= 50) ? 'Fiar con límite' : 'Denegar crédito')
+            recomendacion: recomendacion
           };
         }
       },

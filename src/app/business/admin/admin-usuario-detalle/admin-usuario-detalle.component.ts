@@ -1002,21 +1002,27 @@ export class AdminUsuarioDetalleComponent implements OnInit {
 
   inicializarDatosSbs(): void {
     if (this.user && this.user.sbsCalificacion) {
+      const score = (this.user.sbsScore !== null && this.user.sbsScore !== undefined) ? this.user.sbsScore : 0;
+      const limite = (this.user.limiteCredito !== null && this.user.limiteCredito !== undefined) ? this.user.limiteCredito : 0;
+      const semaforo = this.user.sbsSemaforo || (score >= 75 ? 'VERDE' : (score >= 50 ? 'AMARILLO' : 'ROJO'));
+      const nivelRiesgo = semaforo === 'ROJO' || score < 50 ? 'Alto' : (score < 75 ? 'Medio' : 'Bajo');
+      const recomendacion = semaforo === 'ROJO' || score < 50 ? 'Denegar crédito' : (score < 75 ? 'Fiar con límite' : 'Aprobado para fiar');
+
       this.sbsAnalysisResult = {
         calificacion: this.user.sbsCalificacion,
         deudaTotal: this.user.sbsDeudaTotal || 0,
         entidades: this.user.sbsEntidades
           ? this.user.sbsEntidades.split(',').map((e: string) => e.trim()).filter((e: string) => e.length > 0)
           : [],
-        scoreCrediticio: this.user.sbsScore || 90,
-        limiteSugerido: this.user.limiteCredito || 500,
-        semaforo: this.user.sbsSemaforo || 'VERDE',
-        nivelRiesgo: (this.user.sbsScore >= 75) ? 'Bajo' : ((this.user.sbsScore >= 50) ? 'Medio' : 'Alto'),
+        scoreCrediticio: score,
+        limiteSugerido: limite,
+        semaforo: semaforo,
+        nivelRiesgo: nivelRiesgo,
         documentoUrl: this.user.sbsDocumentoUrl,
         fechaEvaluacion: this.user.sbsFechaEvaluacion
           ? new Date(this.user.sbsFechaEvaluacion).toLocaleString()
           : '',
-        recomendacion: (this.user.sbsScore >= 75) ? 'Aprobado para fiar' : ((this.user.sbsScore >= 50) ? 'Fiar con límite' : 'Denegar crédito')
+        recomendacion: recomendacion
       };
     } else {
       this.sbsAnalysisResult = null;
