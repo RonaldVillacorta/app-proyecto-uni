@@ -268,7 +268,8 @@
                     <th class="py-3">LÍMITE SUGERIDO IA</th>
                     <th class="py-3">SCORE</th>
                     <th class="py-3">NIVEL RIESGO</th>
-                    <th class="pe-3 py-3">RECOMENDACIÓN</th>
+                    <th class="py-3">RECOMENDACIÓN</th>
+                    <th class="pe-3 py-3 text-end">INTERPRETACIÓN IA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -326,16 +327,25 @@
                     </td>
 
                     <!-- RECOMENDACIÓN -->
-                    <td class="pe-3 py-3">
+                    <td class="py-3">
                       <span class="font-weight-bold small"
                             [style.color]="c.nivel_riesgo === 'Bajo' ? '#166534' : (c.nivel_riesgo === 'Medio' ? '#9A5B13' : '#991B1B')">
                         {{ c.recomendacion }}
                       </span>
                     </td>
+
+                    <!-- BOTÓN DETALLE EXPLICATIVO -->
+                    <td class="pe-3 py-3 text-end">
+                      <button class="btn btn-sm font-weight-bold d-inline-flex align-items-center"
+                              style="background: #FAF7F2; border: 1px solid #C59B6D; color: #2C1810; border-radius: 8px; font-size: 0.78rem; padding: 4px 10px;"
+                              (click)="$event.stopPropagation(); abrirModalDetalle(c)">
+                        <i class="fas fa-brain mr-1.5" style="color: #C59B6D;"></i> ¿Por qué este límite?
+                      </button>
+                    </td>
                   </tr>
 
                   <tr *ngIf="clientesFiltrados.length === 0">
-                    <td colspan="5" class="text-center py-4" style="color: #66564E;">
+                    <td colspan="6" class="text-center py-4" style="color: #66564E;">
                       No se encontraron clientes con el filtro seleccionado.
                     </td>
                   </tr>
@@ -395,6 +405,21 @@
                 El modelo le asigna un riesgo <strong>{{ clienteSeleccionado.nivel_riesgo }} (Score: {{ clienteSeleccionado.score_crediticio }})</strong>.
               </p>
 
+              <!-- EXPLICACIÓN DE LÍMITE EN EL ASISTENTE -->
+              <div class="p-3 my-2 rounded" style="background: #FFFFFF; border-left: 4px solid #C59B6D; border: 1px solid #E5DDD3; border-left-width: 4px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="small font-weight-bold" style="color: #2C1810;">
+                    <i class="fas fa-search-dollar mr-1" style="color: #C59B6D;"></i> ¿Por qué este límite de S/. {{ clienteSeleccionado.limite_sugerido.toFixed(2) }}?
+                  </span>
+                  <button class="btn btn-link p-0 small font-weight-bold" style="color: #C59B6D; text-decoration: none;" (click)="abrirModalDetalle(clienteSeleccionado)">
+                    Ver diagnóstico completo <i class="fas fa-external-link-alt ml-1"></i>
+                  </button>
+                </div>
+                <p class="mb-0 small" style="color: #66564E; line-height: 1.5;">
+                  {{ clienteSeleccionado.explicacionLimite }}
+                </p>
+              </div>
+
               <!-- CAJA DE RESULTADO DE SIMULACIÓN -->
               <div *ngIf="resultadoSimulacion"
                    class="p-3 my-2 rounded d-flex align-items-start gap-2 shadow-sm"
@@ -429,6 +454,177 @@
           </div>
 
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL POPUP: EXPLICACIÓN DETALLADA DE LÍMITE Y SCORING IA (XAI) -->
+    <div class="modal-backdrop-custom" *ngIf="modalDetalleVisible && clienteSeleccionado" (click)="cerrarModalDetalle()">
+      <div class="modal-dialog-custom" (click)="$event.stopPropagation()">
+        
+        <!-- Header -->
+        <div class="modal-header-custom p-4 d-flex justify-content-between align-items-center border-bottom" style="background: #24130C; border-color: #3D2214 !important; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar-circle-lg">
+              {{ getIniciales(clienteSeleccionado.nombre) }}
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <h5 class="mb-0 font-weight-bold text-white" style="font-family: 'Lora', serif;">{{ clienteSeleccionado.nombre }}</h5>
+                <span class="badge px-2 py-1 font-weight-bold"
+                      [style.background-color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#DCFCE7' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#FEF7EA' : '#FEECEB')"
+                      [style.color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#166534' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#9A5B13' : '#991B1B')">
+                  Riesgo {{ clienteSeleccionado.nivel_riesgo }}
+                </span>
+              </div>
+              <small class="text-white-50">DNI: {{ clienteSeleccionado.dni || 'Sin DNI' }} • Antigüedad: {{ clienteSeleccionado.antiguedadMeses }} meses en el sistema</small>
+            </div>
+          </div>
+          <button class="btn btn-sm text-white" style="background: rgba(255,255,255,0.15); border-radius: 50%; width: 34px; height: 34px;" (click)="cerrarModalDetalle()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body-custom p-4" style="background: #FAF7F2; max-height: 80vh; overflow-y: auto;">
+
+          <!-- TARJETA DESTACADA: LÍMITE Y SCORE -->
+          <div class="p-3 mb-4 rounded-3 d-flex flex-wrap justify-content-between align-items-center shadow-sm"
+               style="background: #FFFFFF; border: 1px solid #E5DDD3;">
+            <div class="d-flex align-items-center gap-3">
+              <div class="p-3 rounded-circle mr-2" [style.background]="clienteSeleccionado.limite_sugerido > 0 ? '#DCFCE7' : '#FEECEB'">
+                <i class="fas" [ngClass]="clienteSeleccionado.limite_sugerido > 0 ? 'fa-wallet text-success' : 'fa-ban text-danger'" style="font-size: 1.5rem;"></i>
+              </div>
+              <div>
+                <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">LÍMITE SUGERIDO POR IA</small>
+                <h3 class="mb-0 font-weight-bold" [style.color]="clienteSeleccionado.limite_sugerido > 0 ? '#166534' : '#DC2626'">
+                  S/. {{ clienteSeleccionado.limite_sugerido | number:'1.2-2' }}
+                </h3>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 mt-2 mt-sm-0">
+              <div class="text-end mr-2">
+                <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">SCORE PREDICTIVO IA</small>
+                <div class="h4 mb-0 font-weight-bold" [style.color]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')">
+                  {{ clienteSeleccionado.score_crediticio }} <small style="font-size: 0.85rem; color: #8C7B72;">/ 100 pts</small>
+                </div>
+              </div>
+              <div style="width: 50px; height: 50px; position: relative;">
+                <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5DDD3" stroke-width="3.5" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                        [attr.stroke]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')"
+                        stroke-width="3.5" stroke-dasharray="100, 100" [attr.stroke-dashoffset]="100 - clienteSeleccionado.score_crediticio" stroke-linecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 FACTORES CLAVE DEL MODELO DE MACHINE LEARNING -->
+          <div class="mb-4">
+            <h6 class="font-weight-bold mb-3 d-flex align-items-center" style="color: #2C1810; font-family: 'Lora', serif;">
+              <i class="fas fa-sliders-h mr-2" style="color: #C59B6D;"></i> Factores Financieros Evaluados por el Modelo
+            </h6>
+            
+            <div class="row g-3">
+              <!-- Ingreso Estimado -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
+                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.72rem;">1. Ingreso Mensual</small>
+                  <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.ingresoMensual | number:'1.2-2' }}</div>
+                  <small style="color: #66564E; font-size: 0.72rem;">Capacidad económica</small>
+                </div>
+              </div>
+
+              <!-- Capacidad Libre -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
+                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.72rem;">2. Capacidad de Pago</small>
+                  <div class="font-weight-bold h6 mb-0" style="color: #166534;">S/. {{ clienteSeleccionado.capacidadPagoEstimada | number:'1.2-2' }}</div>
+                  <small style="color: #66564E; font-size: 0.72rem;">Liquidez libre/mes</small>
+                </div>
+              </div>
+
+              <!-- Compras Históricas -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
+                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.72rem;">3. Compras Pagadas</small>
+                  <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.totalComprasHistorico | number:'1.2-2' }}</div>
+                  <small style="color: #66564E; font-size: 0.72rem;">Volumen cancelado</small>
+                </div>
+              </div>
+
+              <!-- Deuda Activa & Atraso -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
+                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.72rem;">4. Deuda & Retraso</small>
+                  <div class="font-weight-bold h6 mb-0" [style.color]="clienteSeleccionado.montoDeudaActual > 0 ? '#DC2626' : '#166534'">
+                    S/. {{ clienteSeleccionado.montoDeudaActual | number:'1.2-2' }}
+                  </div>
+                  <small style="color: #66564E; font-size: 0.72rem;">{{ clienteSeleccionado.cuotasVencidas }} cuotas, {{ clienteSeleccionado.diasRetrasoPromedio.toFixed(0) }}d mora</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPLICACIÓN CLARA DEL LÍMITE (EXPLAINABLE AI) -->
+          <div class="p-4 mb-4 rounded-3 shadow-sm" style="background: #FFFFFF; border: 2px solid #C59B6D;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="p-2 rounded-circle mr-2" style="background: #FEF7EA; color: #8C5D30;">
+                <i class="fas fa-lightbulb"></i>
+              </span>
+              <h6 class="mb-0 font-weight-bold" style="color: #2C1810; font-family: 'Lora', serif;">
+                ¿Por qué la IA calculó este Límite de Crédito?
+              </h6>
+            </div>
+
+            <p class="mb-3" style="color: #241A15; font-size: 0.95rem; line-height: 1.6;">
+              {{ clienteSeleccionado.explicacionLimite }}
+            </p>
+
+            <div class="p-3 rounded" style="background: #F9F6F0; border-left: 4px solid #C59B6D;">
+              <small class="d-block" style="color: #66564E; line-height: 1.5;">
+                <strong style="color: #2C1810;">Principio Financiero (Score vs. Límite):</strong> 
+                El <strong>Score</strong> mide la <em>probabilidad de que pague a tiempo</em> (solvencia moral), mientras que el <strong>Límite</strong> mide su <em>capacidad económica real</em> (ingreso y volumen de compra). Un cliente puede tener Score 90 por no tener deudas, pero un límite inicial prudente por ser nuevo o de menor ingreso; mientras que un cliente recurrente con compras mayores y buen sueldo puede acceder a un límite mayor aun con Score moderado.
+              </small>
+            </div>
+          </div>
+
+          <!-- SIMULADOR INTERACTIVO DENTRO DEL MODAL -->
+          <div class="p-3 rounded-3 shadow-sm" style="background: #FAF6F0; border: 1px solid #E5DDD3;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong class="text-uppercase small" style="color: #8C5D30; letter-spacing: 0.5px;">SIMULADOR EN TIEMPO REAL</strong>
+              <small style="color: #66564E;">Simular si es seguro fiarle un monto específico</small>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <div class="input-group input-group-sm" style="max-width: 180px;">
+                <span class="input-group-text font-weight-bold" style="background: #FFFFFF; border: 1px solid #E5DDD3;">S/.</span>
+                <input type="number" class="form-control font-weight-bold" [(ngModel)]="montoSimulacion" min="10" max="5000">
+              </div>
+              <button class="btn btn-sm px-3 font-weight-bold" (click)="simularCredito()"
+                      style="background: #2C1810; color: #F7EAD9; border: 1px solid #C59B6D; border-radius: 6px;">
+                <i class="fas fa-calculator mr-1" style="color: #FAD082;"></i> Evaluar Monto
+              </button>
+            </div>
+
+            <div *ngIf="resultadoSimulacion" class="p-2.5 rounded font-weight-bold small mt-2"
+                 [style.background]="tipoResultadoSimulacion === 'denegado' ? '#FEECEB' : (tipoResultadoSimulacion === 'aprobado' ? '#DCFCE7' : '#FEF7EA')"
+                 [style.color]="tipoResultadoSimulacion === 'denegado' ? '#991B1B' : (tipoResultadoSimulacion === 'aprobado' ? '#166534' : '#9A5B13')"
+                 [style.border]="tipoResultadoSimulacion === 'denegado' ? '1px solid #FECACA' : (tipoResultadoSimulacion === 'aprobado' ? '1px solid #BBF7D0' : '1px solid #FDE68A')">
+              {{ resultadoSimulacion }}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer-custom p-3 d-flex justify-content-end border-top" style="background: #FFFFFF; border-color: #E5DDD3 !important; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+          <button class="btn btn-sm px-4 font-weight-bold" style="background: #2C1810; color: #F7EAD9; border-radius: 8px;" (click)="cerrarModalDetalle()">
+            Entendido / Cerrar
+          </button>
+        </div>
+
       </div>
     </div>
 

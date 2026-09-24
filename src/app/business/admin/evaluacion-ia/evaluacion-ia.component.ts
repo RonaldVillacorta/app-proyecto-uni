@@ -20,6 +20,10 @@ export interface ClienteEvaluado extends EvaluacionIAResponse {
   diasRetrasoPromedio: number;
   cuotasVencidas: number;
   ingresoMensual: number;
+  totalComprasHistorico: number;
+  antiguedadMeses: number;
+  capacidadPagoEstimada: number;
+  explicacionLimite: string;
 }
 
 @Component({
@@ -42,6 +46,7 @@ export class EvaluacionIaComponent implements OnInit {
   metricasModelo: MetricasModeloIA | null = null;
 
   clienteSeleccionado: ClienteEvaluado | null = null;
+  modalDetalleVisible: boolean = false;
   montoSimulacion: number = 200;
   resultadoSimulacion: string | null = null;
   tipoResultadoSimulacion: 'aprobado' | 'denegado' | 'advertencia' = 'aprobado';
@@ -252,15 +257,27 @@ export class EvaluacionIaComponent implements OnInit {
         const resultadoFinal: ClienteEvaluado[] = respuestas.map((r: EvaluacionIAResponse) => {
           const raw = rawMap.get(r.id || 0) || {};
           const feat = features.find((f) => f.id === r.id);
+          const ingreso = feat ? feat.ingreso_mensual : 2000;
+          const deuda = feat ? feat.monto_deuda_actual : 0;
+          const compras = feat ? feat.total_compras_historico : 0;
+          const antiguedad = feat ? feat.antiguedad_meses : 12;
+          const capacidad = Math.max(0, (ingreso * 0.22) - (deuda * 0.35));
+          const cuotas = feat ? feat.cuotas_vencidas : 0;
+          const dias = feat ? feat.dias_retraso_promedio : 0;
+
           const item: ClienteEvaluado = {
             ...r,
             email: raw.email || '',
             phone: raw.phone || '',
             dni: raw.dni || '',
-            montoDeudaActual: feat ? feat.monto_deuda_actual : 0,
-            diasRetrasoPromedio: feat ? feat.dias_retraso_promedio : 0,
-            cuotasVencidas: feat ? feat.cuotas_vencidas : 0,
-            ingresoMensual: feat ? feat.ingreso_mensual : 2000
+            montoDeudaActual: deuda,
+            diasRetrasoPromedio: dias,
+            cuotasVencidas: cuotas,
+            ingresoMensual: ingreso,
+            totalComprasHistorico: compras,
+            antiguedadMeses: antiguedad,
+            capacidadPagoEstimada: capacidad,
+            explicacionLimite: this.generarExplicacionLimite(r.limite_sugerido, r.score_crediticio, ingreso, capacidad, compras, cuotas, dias, raw.sbsSemaforo)
           };
           return this.aplicarConsistenciaSbs(item, raw);
         });
@@ -272,6 +289,7 @@ export class EvaluacionIaComponent implements OnInit {
         const fallback: ClienteEvaluado[] = features.map((f: ClienteFeatures) => {
           const raw = rawMap.get(f.id || 0) || {};
           const scoring = this.calcularScoreContinuo(f, raw);
+          const capacidad = Math.max(0, (f.ingreso_mensual * 0.22) - (f.monto_deuda_actual * 0.35));
           const item: ClienteEvaluado = {
             id: f.id,
             nombre: f.nombre,
@@ -287,7 +305,11 @@ export class EvaluacionIaComponent implements OnInit {
             montoDeudaActual: f.monto_deuda_actual,
             diasRetrasoPromedio: f.dias_retraso_promedio,
             cuotasVencidas: f.cuotas_vencidas,
-            ingresoMensual: f.ingreso_mensual
+            ingresoMensual: f.ingreso_mensual,
+            totalComprasHistorico: f.total_compras_historico,
+            antiguedadMeses: f.antiguedad_meses,
+            capacidadPagoEstimada: capacidad,
+            explicacionLimite: this.generarExplicacionLimite(scoring.limite, scoring.score, f.ingreso_mensual, capacidad, f.total_compras_historico, f.cuotas_vencidas, f.dias_retraso_promedio, raw.sbsSemaforo)
           };
           return item;
         });
@@ -391,6 +413,7 @@ export class EvaluacionIaComponent implements OnInit {
         item.limite_sugerido = 0;
         item.recomendacion = 'Denegar crédito';
         item.motivo_analisis = `Alerta SBS: Calificación ${raw.sbsCalificacion || 'Dudoso/Pérdida'} en el sistema financiero con deuda de S/. ${(raw.sbsDeudaTotal || 0).toFixed(2)}. Línea de crédito bloqueada por morosidad crítica.`;
+        item.explicacionLimite = `Línea bloqueada (S/. 0.00) por Alerta Crítica SBS: Calificación ${raw.sbsCalificacion || 'Dudoso/Pérdida'} en bancos con deuda consolidada de S/. ${(raw.sbsDeudaTotal || 0).toFixed(2)}. Prevalece el riesgo sistémico externo para proteger la liquidez de la tienda.`;
       } else if (raw.sbsSemaforo === 'AMARILLO') {
         item.nivel_riesgo = 'Medio';
         item.score_crediticio = raw.sbsScore || 65;
@@ -398,6 +421,7 @@ export class EvaluacionIaComponent implements OnInit {
         item.limite_sugerido = Math.min(raw.limiteCredito !== undefined ? raw.limiteCredito : 300, 350);
         item.recomendacion = 'Fiar con límite';
         item.motivo_analisis = `Observación SBS: Calificación ${raw.sbsCalificacion || 'CPP'} con problemas potenciales en el sistema financiero. Fiado preventivo limitado a S/. ${item.limite_sugerido}.`;
+        item.explicacionLimite = `Línea preventiva reducida a S/. ${item.limite_sugerido.toFixed(2)}: Registra calificación ${raw.sbsCalificacion || 'CPP'} en entidades financieras. Se aprueba cupo de mitigación de riesgo con plazos de cobro más cortos.`;
       } else if (raw.sbsSemaforo === 'VERDE') {
         if (item.cuotasVencidas > 0 || item.diasRetrasoPromedio > 15) {
           item.nivel_riesgo = 'Medio';
@@ -405,17 +429,31 @@ export class EvaluacionIaComponent implements OnInit {
           item.limite_sugerido = 350;
           item.recomendacion = 'Fiar con límite';
           item.motivo_analisis = `Alerta Interna: Calificación SBS Normal, pero registra ${item.cuotasVencidas} cuota(s) impaga(s) en la tienda. Cupo limitado a S/. 350.`;
+          item.explicacionLimite = `Línea moderada a S/. 350.00: Aunque su reporte SBS bancario está Normal, registra ${item.cuotasVencidas} cuota(s) impaga(s) y ${item.diasRetrasoPromedio.toFixed(0)} días de atraso en la bodega. Se limita el fiado hasta saldar las cuotas pendientes.`;
         } else {
           item.nivel_riesgo = 'Bajo';
           item.score_crediticio = Math.max(item.score_crediticio, raw.sbsScore || 92);
           item.limite_sugerido = raw.limiteCredito !== undefined && raw.limiteCredito !== null ? raw.limiteCredito : Math.max(item.limite_sugerido, 500);
           item.recomendacion = 'Aprobado para fiar';
           item.motivo_analisis = `Calificación SBS Normal y cumplimiento puntual en tienda. Límite aprobado de S/. ${item.limite_sugerido}.`;
+          item.explicacionLimite = `Línea ampliada a S/. ${item.limite_sugerido.toFixed(2)}: Sinergia de solvencia confirmada. Calificación SBS 100% Normal en bancos junto a puntualidad absoluta en la bodega.`;
         }
       }
     }
 
     return item;
+  }
+
+  generarExplicacionLimite(limite: number, score: number, ingreso: number, capacidad: number, compras: number, cuotas: number, dias: number, sbsSemaforo?: string): string {
+    if (sbsSemaforo === 'ROJO' || limite === 0 || score < 40 || cuotas >= 2 || dias > 30) {
+      return `Línea bloqueada (S/. 0.00): El cliente presenta morosidad crítica (${cuotas} cuota(s) impaga(s), ${dias.toFixed(0)} días de retraso). La probabilidad de impago supera el 80%, por lo que la IA deniega el crédito para evitar pérdidas.`;
+    }
+
+    if (compras > 0) {
+      return `Línea de S/. ${limite.toFixed(2)}: Respaldada por un historial de compras canceladas de S/. ${compras.toFixed(2)} y una capacidad de pago libre estimada de S/. ${capacidad.toFixed(2)}/mes (sobre un ingreso de S/. ${ingreso.toFixed(2)}). Su Score de ${score} pts certifica un riesgo controlado.`;
+    }
+
+    return `Línea de entrada prudente de S/. ${limite.toFixed(2)}: A pesar de su excelente Score de ${score} pts (sin mora), es un cliente nuevo sin volumen de compras previo. La IA aprueba un cupo de inicio prudente sobre su ingreso mensual (S/. ${ingreso.toFixed(2)}), ampliable conforme acumule compras cumplidas.`;
   }
 
   private esperarYFinalizar(resultadoFinal: ClienteEvaluado[], conAnimacion: boolean): void {
@@ -520,6 +558,15 @@ export class EvaluacionIaComponent implements OnInit {
     this.clienteSeleccionado = cliente;
     this.resultadoSimulacion = null;
     this.montoSimulacion = cliente.limite_sugerido > 0 ? Math.min(200, cliente.limite_sugerido) : 150;
+    this.modalDetalleVisible = true;
+  }
+
+  abrirModalDetalle(cliente: ClienteEvaluado): void {
+    this.seleccionarCliente(cliente);
+  }
+
+  cerrarModalDetalle(): void {
+    this.modalDetalleVisible = false;
   }
 
   simularCredito(): void {

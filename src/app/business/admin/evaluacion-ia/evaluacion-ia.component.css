@@ -196,3 +196,55 @@
 .table-ai tbody tr:hover {
   background: #FAF5EE;
 }
+
+/* Modal Personalizado XAI - Explainable AI */
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(36, 19, 12, 0.72);
+  backdrop-filter: blur(5px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-dialog-custom {
+  width: 100%;
+  max-width: 760px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(26, 13, 7, 0.35);
+  border: 1px solid #E5DDD3;
+  overflow: hidden;
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.avatar-circle-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #C59B6D;
+  color: #24130C;
+  font-weight: 800;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FAF7F2;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(24px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
