@@ -252,7 +252,7 @@ export class EvaluacionIaComponent implements OnInit {
         const resultadoFinal: ClienteEvaluado[] = respuestas.map((r: EvaluacionIAResponse) => {
           const raw = rawMap.get(r.id || 0) || {};
           const feat = features.find((f) => f.id === r.id);
-          return {
+          const item: ClienteEvaluado = {
             ...r,
             email: raw.email || '',
             phone: raw.phone || '',
@@ -262,6 +262,7 @@ export class EvaluacionIaComponent implements OnInit {
             cuotasVencidas: feat ? feat.cuotas_vencidas : 0,
             ingresoMensual: feat ? feat.ingreso_mensual : 2000
           };
+          return this.aplicarConsistenciaSbs(item, raw);
         });
 
         this.esperarYFinalizar(resultadoFinal, conAnimacion);
@@ -274,7 +275,7 @@ export class EvaluacionIaComponent implements OnInit {
           const score = riesgoAlto ? Math.max(15, 45 - f.cuotas_vencidas * 8) : 75 + ((f.id || 1) * 7 % 23);
           const nivel: 'Bajo' | 'Medio' | 'Alto' = score >= 72 ? 'Bajo' : score >= 42 ? 'Medio' : 'Alto';
           const limite = nivel === 'Bajo' ? Math.round(f.ingreso_mensual * 0.35) : nivel === 'Medio' ? 350 : 0;
-          return {
+          const item: ClienteEvaluado = {
             id: f.id,
             nombre: f.nombre,
             probabilidad_impago: riesgoAlto ? 78.4 : 11.6,
@@ -282,7 +283,7 @@ export class EvaluacionIaComponent implements OnInit {
             nivel_riesgo: nivel,
             limite_sugerido: limite,
             recomendacion: nivel === 'Bajo' ? 'Aprobado para fiar' : nivel === 'Medio' ? 'Fiar con limite' : 'Denegar credito',
-            motivo_analisis: 'An?lisis de riesgo basado en hist?rico financiero.',
+            motivo_analisis: 'Análisis de riesgo basado en histórico financiero.',
             email: raw.email,
             phone: raw.phone,
             dni: raw.dni,
@@ -291,10 +292,51 @@ export class EvaluacionIaComponent implements OnInit {
             cuotasVencidas: f.cuotas_vencidas,
             ingresoMensual: f.ingreso_mensual
           };
+          return this.aplicarConsistenciaSbs(item, raw);
         });
         this.esperarYFinalizar(fallback, conAnimacion);
       }
     });
+  }
+
+  private aplicarConsistenciaSbs(item: ClienteEvaluado, raw: any): ClienteEvaluado {
+    if (!raw) return item;
+
+    // Si el cliente tiene un reporte oficial SBS subido y evaluado
+    if (raw.sbsSemaforo) {
+      if (raw.sbsSemaforo === 'ROJO' || (raw.sbsScore !== null && raw.sbsScore !== undefined && raw.sbsScore < 50)) {
+        item.nivel_riesgo = 'Alto';
+        item.score_crediticio = raw.sbsScore || 30;
+        item.probabilidad_impago = 88.5;
+        item.limite_sugerido = 0;
+        item.recomendacion = 'Denegar crédito';
+        item.motivo_analisis = `Alerta SBS: Calificación ${raw.sbsCalificacion || 'Dudoso/Pérdida'} en el sistema financiero con deuda de S/. ${(raw.sbsDeudaTotal || 0).toFixed(2)}. Línea de crédito bloqueada por morosidad crítica.`;
+      } else if (raw.sbsSemaforo === 'AMARILLO') {
+        item.nivel_riesgo = 'Medio';
+        item.score_crediticio = raw.sbsScore || 65;
+        item.probabilidad_impago = 38.0;
+        item.limite_sugerido = Math.min(raw.limiteCredito !== undefined ? raw.limiteCredito : 300, 350);
+        item.recomendacion = 'Fiar con límite';
+        item.motivo_analisis = `Observación SBS: Calificación ${raw.sbsCalificacion || 'CPP'} con problemas potenciales en el sistema financiero. Fiado preventivo limitado a S/. ${item.limite_sugerido}.`;
+      } else if (raw.sbsSemaforo === 'VERDE') {
+        // SBS 100% Normal
+        if (item.cuotasVencidas > 0 || item.diasRetrasoPromedio > 15) {
+          item.nivel_riesgo = 'Medio';
+          item.score_crediticio = 68;
+          item.limite_sugerido = 350;
+          item.recomendacion = 'Fiar con límite';
+          item.motivo_analisis = `Alerta Interna: Calificación SBS Normal, pero registra ${item.cuotasVencidas} cuota(s) impaga(s) en la tienda. Cupo limitado a S/. 350.`;
+        } else {
+          item.nivel_riesgo = 'Bajo';
+          item.score_crediticio = Math.max(item.score_crediticio, raw.sbsScore || 92);
+          item.limite_sugerido = raw.limiteCredito !== undefined && raw.limiteCredito !== null ? raw.limiteCredito : Math.max(item.limite_sugerido, 500);
+          item.recomendacion = 'Aprobado para fiar';
+          item.motivo_analisis = `Calificación SBS Normal y cumplimiento puntual en tienda. Límite aprobado de S/. ${item.limite_sugerido}.`;
+        }
+      }
+    }
+
+    return item;
   }
 
   private esperarYFinalizar(resultadoFinal: ClienteEvaluado[], conAnimacion: boolean): void {
