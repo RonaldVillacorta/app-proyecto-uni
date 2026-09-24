@@ -42,7 +42,15 @@ export class AdminUsuarioDetalleComponent implements OnInit {
   // Estado de la página
   loading = true;
   error = '';
-  activeTab = 'perfil'; // 'perfil', 'compras', 'creditos', 'pagos'
+  activeTab = 'perfil'; // 'perfil', 'compras', 'creditos', 'pagos', 'sbs'
+
+  // Variables SBS Document AI
+  selectedSbsFile: File | null = null;
+  sbsFilePreview: string | null = null;
+  sbsFileIsPdf = false;
+  sbsAnalyzing = false;
+  sbsAnalysisResult: any = null;
+  sbsUploadError = '';
 
   // Control de acordeón para cuentas desplegables (empiezan colapsadas)
   cuentasDesplegadas: { [id: number]: boolean } = {};
@@ -169,6 +177,7 @@ export class AdminUsuarioDetalleComponent implements OnInit {
       next: (user) => {
         this.user = user;
         this.userId = user.id;
+        this.inicializarDatosSbs();
         this.cargarVentas();
       },
       error: (err) => {
@@ -195,6 +204,7 @@ export class AdminUsuarioDetalleComponent implements OnInit {
     this.userService.findById(this.userId).subscribe({
       next: (user) => {
         this.user = user;
+        this.inicializarDatosSbs();
         this.cargarVentas();
       },
       error: (err) => {
@@ -981,6 +991,140 @@ export class AdminUsuarioDetalleComponent implements OnInit {
             console.error('Error al subir comprobante Yape:', err);
             (Swal as any).fire('Error', err?.error?.error || err?.error || 'No se pudo registrar el pago con comprobante', 'error');
           }
+        });
+      }
+    });
+  }
+
+  isClient(): boolean {
+    return !this.authService.isAdmin();
+  }
+
+  inicializarDatosSbs(): void {
+    if (this.user && this.user.sbsCalificacion) {
+      this.sbsAnalysisResult = {
+        calificacion: this.user.sbsCalificacion,
+        deudaTotal: this.user.sbsDeudaTotal || 0,
+        entidades: this.user.sbsEntidades
+          ? this.user.sbsEntidades.split(',').map((e: string) => e.trim()).filter((e: string) => e.length > 0)
+          : [],
+        scoreCrediticio: this.user.sbsScore || 90,
+        limiteSugerido: this.user.limiteCredito || 500,
+        semaforo: this.user.sbsSemaforo || 'VERDE',
+        nivelRiesgo: (this.user.sbsScore >= 75) ? 'Bajo' : ((this.user.sbsScore >= 50) ? 'Medio' : 'Alto'),
+        documentoUrl: this.user.sbsDocumentoUrl,
+        fechaEvaluacion: this.user.sbsFechaEvaluacion
+          ? new Date(this.user.sbsFechaEvaluacion).toLocaleString()
+          : '',
+        recomendacion: (this.user.sbsScore >= 75) ? 'Aprobado para fiar' : ((this.user.sbsScore >= 50) ? 'Fiar con límite' : 'Denegar crédito')
+      };
+    } else {
+      this.sbsAnalysisResult = null;
+    }
+  }
+
+  onSbsFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.processSelectedSbsFile(file);
+    }
+  }
+
+  onSbsFileDropped(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.processSelectedSbsFile(file);
+    }
+  }
+
+  onSbsDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  processSelectedSbsFile(file: File): void {
+    this.sbsUploadError = '';
+    const validExtensions = ['pdf', 'png', 'jpg', 'jpeg'];
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!validExtensions.includes(extension)) {
+      this.sbsUploadError = 'Formato no admitido. Por favor selecciona un archivo PDF o una imagen (PNG, JPG, JPEG).';
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      this.sbsUploadError = 'El archivo supera el tamaño máximo permitido de 15MB.';
+      return;
+    }
+
+    this.selectedSbsFile = file;
+    this.sbsFileIsPdf = extension === 'pdf';
+
+    if (!this.sbsFileIsPdf) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.sbsFilePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.sbsFilePreview = null;
+    }
+  }
+
+  clearSbsFile(): void {
+    this.selectedSbsFile = null;
+    this.sbsFilePreview = null;
+    this.sbsFileIsPdf = false;
+    this.sbsUploadError = '';
+  }
+
+  uploadAndAnalyzeSbsReport(): void {
+    if (!this.selectedSbsFile) {
+      return;
+    }
+
+    this.sbsAnalyzing = true;
+    this.sbsUploadError = '';
+
+    this.userService.subirReporteSbs(this.selectedSbsFile).subscribe({
+      next: (resultado) => {
+        this.sbsAnalyzing = false;
+        this.sbsAnalysisResult = resultado;
+        if (this.user) {
+          this.user.sbsCalificacion = resultado.calificacion;
+          this.user.sbsDeudaTotal = resultado.deudaTotal;
+          this.user.sbsScore = resultado.scoreCrediticio;
+          this.user.sbsSemaforo = resultado.semaforo;
+          this.user.limiteCredito = resultado.limiteSugerido;
+          this.user.sbsFechaEvaluacion = resultado.fechaEvaluacion;
+          this.user.sbsDocumentoUrl = resultado.documentoUrl;
+        }
+
+        Swal.fire({
+          title: '¡Reporte SBS Analizado con IA!',
+          text: `Calificación detectada: ${resultado.calificacion}. Nuevo límite de fiado asignado: S/. ${parseFloat(resultado.limiteSugerido).toFixed(2)}`,
+          icon: 'success',
+          background: '#24130C',
+          color: '#FAF7F2',
+          iconColor: '#C59B6D',
+          confirmButtonColor: '#C59B6D'
+        });
+      },
+      error: (err) => {
+        this.sbsAnalyzing = false;
+        console.error('Error al analizar reporte SBS:', err);
+        const errMsg = err?.error?.error || 'No se pudo procesar el reporte SBS. Verifica que el archivo sea legible.';
+        this.sbsUploadError = errMsg;
+        Swal.fire({
+          title: 'Error de Análisis',
+          text: errMsg,
+          icon: 'error',
+          background: '#24130C',
+          color: '#FAF7F2',
+          iconColor: '#E74C3C',
+          confirmButtonColor: '#C59B6D'
         });
       }
     });

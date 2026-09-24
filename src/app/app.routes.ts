@@ -47,6 +47,11 @@ export const routes: Routes = [
         canActivate: [authRutasGuard],
       },
       {
+        path: 'profile',
+        component: AdminUsuarioDetalleComponent,
+        canActivate: [authRutasGuard],
+      },
+      {
         path: 'user/edit/:id',
         component: UserFormComponent,
         canActivate: [authGuard],

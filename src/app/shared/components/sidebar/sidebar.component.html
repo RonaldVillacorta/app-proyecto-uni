@@ -51,9 +51,14 @@
       <span>Área Personal</span>
     </div>
 
-    <a routerLink="/user" class="cr-nav-link" routerLinkActive="active">
+    <a routerLink="/user" class="cr-nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
       <i class="fas fa-id-card"></i>
       <span>Mi Perfil</span>
+    </a>
+
+    <a routerLink="/user" [queryParams]="{tab: 'sbs'}" class="cr-nav-link" routerLinkActive="active">
+      <i class="fas fa-file-invoice-dollar text-warning"></i>
+      <span>Historial SBS</span>
     </a>
 
     <a routerLink="/cliente/dashboard" class="cr-nav-link" routerLinkActive="active">

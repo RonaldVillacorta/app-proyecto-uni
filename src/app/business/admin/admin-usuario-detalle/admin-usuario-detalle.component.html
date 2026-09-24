@@ -240,6 +240,21 @@
                   style="border-radius: 30px; font-size: 0.75rem; border: 1px solid #C59B6D;">{{ pagos.length }}</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link font-weight-bold cursor-pointer" [class.active]="activeTab === 'sbs'" (click)="setActiveTab('sbs')"
+                [style.color]="activeTab === 'sbs' ? '#180B06 !important' : '#FFFFFF !important'"
+                [style.background]="activeTab === 'sbs' ? '#C59B6D' : 'rgba(255,255,255,0.08)'"
+                [style.border]="activeTab === 'sbs' ? '1px solid #FAD082' : '1px solid rgba(255,255,255,0.15)'"
+                style="padding: 10px 18px; border-radius: 8px 8px 0 0; transition: all 0.2s ease; cursor: pointer;">
+                <i class="fas fa-file-invoice-dollar mr-2" [style.color]="activeTab === 'sbs' ? '#180B06' : '#FAD082'"></i>
+                <span class="d-none d-sm-inline">Historial SBS</span>
+                <span class="badge ml-1 py-1 px-2 font-weight-bold"
+                  [style.background]="user?.sbsSemaforo === 'VERDE' ? '#166534' : (user?.sbsSemaforo === 'ROJO' ? '#DC2626' : '#C59B6D')"
+                  style="border-radius: 30px; font-size: 0.75rem; color: #FFFFFF;">
+                  {{ user?.sbsScore ? user.sbsScore + ' pts' : 'SBS' }}
+                </span>
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -813,6 +828,236 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- TAB 5: HISTORIAL CREDITICIO SBS CON IA -->
+          <div *ngIf="activeTab === 'sbs'" style="animation: fadeIn 0.3s ease;">
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-2" style="border-bottom: 2px solid #FAF4EB;">
+              <div>
+                <h4 class="font-weight-bold mb-1" style="color: #2C1810; font-family: 'Lora', serif;">
+                  <i class="fas fa-file-invoice-dollar mr-2" style="color: #C59B6D;"></i>
+                  Reporte & Calificación SBS
+                </h4>
+                <p class="small text-muted mb-0">
+                  Evaluación de riesgo oficial ante la Superintendencia de Banca y Seguros analizada mediante Inteligencia Artificial Multimodal.
+                </p>
+              </div>
+              <span class="badge px-3 py-2" style="background: rgba(197,155,109,0.15); color: #8A6436; font-size: 0.82rem; border-radius: 20px; font-weight: 700;">
+                <i class="fas fa-robot mr-1"></i> Document AI + Machine Learning
+              </span>
+            </div>
+
+            <!-- ZONA DE CARGA: Visible si es cliente -->
+            <div *ngIf="isClient()" class="mb-4">
+              <div class="p-4 rounded-lg text-center"
+                (drop)="onSbsFileDropped($event)"
+                (dragover)="onSbsDragOver($event)"
+                style="background: #FAF7F2; border: 2px dashed #C59B6D; border-radius: 12px; transition: all 0.3s ease;">
+                
+                <input type="file" #sbsFileInput class="d-none" accept=".pdf,image/png,image/jpeg,image/jpg"
+                  (change)="onSbsFileSelected($event)">
+
+                <!-- Estado sin archivo seleccionado -->
+                <div *ngIf="!selectedSbsFile">
+                  <div class="mb-3">
+                    <i class="fas fa-cloud-upload-alt fa-3x" style="color: #C59B6D;"></i>
+                  </div>
+                  <h6 class="font-weight-bold mb-1" style="color: #2C1810;">
+                    Arrastra aquí tu Reporte SBS o haz clic para subirlo
+                  </h6>
+                  <p class="small text-muted mb-3">
+                    Formatos admitidos: <strong>Documento PDF</strong> o <strong>Captura de Pantalla (PNG, JPG, JPEG)</strong>. Máx 15MB.
+                  </p>
+                  <button type="button" class="btn px-4 py-2 font-weight-bold"
+                    (click)="sbsFileInput.click()"
+                    style="background: linear-gradient(135deg, #28140B 0%, #3D1F12 100%); color: #F7EAD9; border-radius: 8px; border: none;">
+                    <i class="fas fa-folder-open mr-2"></i> Seleccionar Documento
+                  </button>
+                </div>
+
+                <!-- Estado con archivo seleccionado -->
+                <div *ngIf="selectedSbsFile" class="text-center">
+                  <div *ngIf="sbsFileIsPdf" class="p-3 mx-auto mb-3 rounded"
+                    style="max-width: 400px; background: #FFFFFF; border: 1px solid #E5DDD3;">
+                    <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
+                    <h6 class="font-weight-bold mb-1 text-truncate" style="color: #2C1810;">{{ selectedSbsFile.name }}</h6>
+                    <small class="text-muted">{{ (selectedSbsFile.size / 1024 / 1024).toFixed(2) }} MB</small>
+                  </div>
+
+                  <div *ngIf="!sbsFileIsPdf && sbsFilePreview" class="p-2 mx-auto mb-3 rounded"
+                    style="max-width: 320px; background: #FFFFFF; border: 1px solid #E5DDD3;">
+                    <img [src]="sbsFilePreview" alt="Vista previa SBS" class="img-fluid rounded" style="max-height: 200px;">
+                    <h6 class="font-weight-bold mt-2 mb-0 small text-truncate" style="color: #2C1810;">{{ selectedSbsFile.name }}</h6>
+                  </div>
+
+                  <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-2"
+                      [disabled]="sbsAnalyzing"
+                      (click)="clearSbsFile()"
+                      style="border-radius: 8px;">
+                      <i class="fas fa-trash-alt mr-1"></i> Quitar
+                    </button>
+                    <button type="button" class="btn btn-sm font-weight-bold px-4 py-2"
+                      [disabled]="sbsAnalyzing"
+                      (click)="uploadAndAnalyzeSbsReport()"
+                      style="background: linear-gradient(135deg, #C59B6D 0%, #A87E50 100%); color: #FFFFFF; border-radius: 8px; border: none;">
+                      <span *ngIf="!sbsAnalyzing">
+                        <i class="fas fa-brain mr-2"></i> Analizar Reporte con IA
+                      </span>
+                      <span *ngIf="sbsAnalyzing">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Procesando con Document AI...
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Mensaje de error si falla la subida -->
+              <div *ngIf="sbsUploadError" class="alert alert-danger mt-3 mb-0 py-2 px-3 small rounded" role="alert">
+                <i class="fas fa-exclamation-circle mr-1"></i> {{ sbsUploadError }}
+              </div>
+            </div>
+
+            <!-- Aviso para Administradores -->
+            <div *ngIf="!isClient()" class="alert alert-info py-3 px-4 mb-4 rounded-lg"
+              style="background: #FAF7F2; border: 1px solid #E5DDD3; color: #66564E;">
+              <i class="fas fa-shield-alt mr-2" style="color: #C59B6D; font-size: 1.1rem;"></i>
+              <strong>Privacidad Bancaria y Titularidad:</strong> Estás visualizando la información crediticia SBS registrada.
+              Por disposiciones de la SBS y normativa de protección de datos personales (Ley N° 29733), la carga del reporte digital debe ser efectuada directamente por el cliente titular desde su acceso personal.
+            </div>
+
+            <!-- TARJETA DE RESULTADOS EVALUADOS -->
+            <div *ngIf="sbsAnalysisResult" class="mt-4 pt-3" style="border-top: 2px dashed #E5DDD3;">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="font-weight-bold mb-0" style="color: #2C1810; font-size: 1.1rem;">
+                  <i class="fas fa-chart-line mr-2" style="color: #C59B6D;"></i> Diagnóstico Financiero & Scoring IA
+                </h6>
+                <small *ngIf="sbsAnalysisResult.fechaEvaluacion" class="text-muted">
+                  <i class="far fa-clock mr-1"></i> Evaluado: {{ sbsAnalysisResult.fechaEvaluacion }}
+                </small>
+              </div>
+
+              <!-- KPI GRID -->
+              <div class="row">
+                <!-- Calificación SBS & Semáforo -->
+                <div class="col-md-4 mb-3">
+                  <div class="p-3 rounded-lg text-center h-100 shadow-sm"
+                    style="background: #FAF7F2; border: 1px solid #E5DDD3; border-radius: 12px;">
+                    <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">Calificación SBS</small>
+                    <div class="my-2">
+                      <span class="badge px-3 py-2 font-weight-bold" style="font-size: 1rem; border-radius: 20px;"
+                        [ngStyle]="{
+                          'background': sbsAnalysisResult.semaforo === 'VERDE' ? '#166534' : (sbsAnalysisResult.semaforo === 'ROJO' ? '#991B1B' : '#B45309'),
+                          'color': '#FFFFFF'
+                        }">
+                        <i class="fas fa-circle mr-1" style="font-size: 0.65rem;"></i>
+                        {{ sbsAnalysisResult.calificacion || '100% NORMAL' }}
+                      </span>
+                    </div>
+                    <small class="d-block" style="color: #66564E;">
+                      Semáforo: 
+                      <strong [ngStyle]="{'color': sbsAnalysisResult.semaforo === 'VERDE' ? '#166534' : (sbsAnalysisResult.semaforo === 'ROJO' ? '#DC2626' : '#D97706')}">
+                        {{ sbsAnalysisResult.semaforo || 'VERDE' }}
+                      </strong>
+                    </small>
+                  </div>
+                </div>
+
+                <!-- Límite de Fiado Aprobado -->
+                <div class="col-md-4 mb-3">
+                  <div class="p-3 rounded-lg text-center h-100 shadow-sm"
+                    style="background: #FAF7F2; border: 1px solid #E5DDD3; border-radius: 12px;">
+                    <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">Límite de Fiado Sugerido</small>
+                    <h3 class="font-weight-bold my-2" style="color: #166534;">
+                      S/. {{ (sbsAnalysisResult.limiteSugerido || user?.limiteCredito || 500) | number:'1.2-2' }}
+                    </h3>
+                    <span class="badge px-2 py-1 small" style="background: rgba(22, 101, 52, 0.12); color: #166534; font-weight: 700;">
+                      <i class="fas fa-check-circle mr-1"></i> {{ sbsAnalysisResult.recomendacion || 'Aprobado para fiar' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Score Crediticio IA -->
+                <div class="col-md-4 mb-3">
+                  <div class="p-3 rounded-lg text-center h-100 shadow-sm"
+                    style="background: #FAF7F2; border: 1px solid #E5DDD3; border-radius: 12px;">
+                    <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">Score IA (0-100)</small>
+                    <h3 class="font-weight-bold my-2" style="color: #C59B6D;">
+                      {{ sbsAnalysisResult.scoreCrediticio || user?.sbsScore || 90 }} <small style="font-size: 1rem; color: #8C7B72;">pts</small>
+                    </h3>
+                    <div class="progress" style="height: 6px; border-radius: 4px; background: #E5DDD3;">
+                      <div class="progress-bar" role="progressbar"
+                        [style.width.%]="sbsAnalysisResult.scoreCrediticio || user?.sbsScore || 90"
+                        [ngStyle]="{'background': (sbsAnalysisResult.scoreCrediticio || 90) >= 75 ? '#166534' : ((sbsAnalysisResult.scoreCrediticio || 90) >= 50 ? '#D97706' : '#DC2626')}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Segunda fila: Deuda en Bancos & Entidades -->
+              <div class="row mt-2">
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 rounded-lg h-100" style="background: #FFFFFF; border: 1px solid #E5DDD3; border-radius: 12px;">
+                    <span class="small font-weight-bold text-muted text-uppercase">Deuda en el Sistema Financiero:</span>
+                    <h5 class="font-weight-bold mt-1 mb-2" style="color: #2C1810;">
+                      S/. {{ (sbsAnalysisResult.deudaTotal || user?.sbsDeudaTotal || 0) | number:'1.2-2' }}
+                    </h5>
+                    <p class="small text-muted mb-0">
+                      Monto de crédito total vigente consolidado entre bancos, cajas municipales y financieras reguladas por la SBS.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 rounded-lg h-100" style="background: #FFFFFF; border: 1px solid #E5DDD3; border-radius: 12px;">
+                    <span class="small font-weight-bold text-muted text-uppercase">Entidades Financieras Reportantes:</span>
+                    <div class="mt-2 d-flex flex-wrap gap-1">
+                      <ng-container *ngIf="sbsAnalysisResult.entidades && sbsAnalysisResult.entidades.length > 0; else sinEntidadesDetalle">
+                        <span *ngFor="let entidad of sbsAnalysisResult.entidades"
+                          class="badge mr-1 mb-1 px-3 py-1 font-weight-bold"
+                          style="background: #F5F1EB; color: #2C1810; border: 1px solid #E5DDD3; font-size: 0.8rem; border-radius: 12px;">
+                          <i class="fas fa-university mr-1" style="color: #C59B6D;"></i> {{ entidad }}
+                        </span>
+                      </ng-container>
+                      <ng-template #sinEntidadesDetalle>
+                        <span class="badge px-3 py-1 text-muted" style="background: #F5F1EB; border: 1px solid #E5DDD3; border-radius: 12px;">
+                          Sin historial de deudas impagas
+                        </span>
+                      </ng-template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Diagnóstico IA -->
+              <div *ngIf="sbsAnalysisResult.resumenIa" class="p-3 rounded-lg mt-2"
+                style="background: #FAF7F2; border-left: 4px solid #C59B6D; border-radius: 8px;">
+                <div class="d-flex align-items-center mb-1">
+                  <i class="fas fa-brain mr-2" style="color: #C59B6D;"></i>
+                  <strong style="color: #2C1810; font-size: 0.95rem;">Análisis y Sustento de Riesgo con IA:</strong>
+                </div>
+                <p class="mb-0 small" style="color: #66564E; line-height: 1.5;">
+                  {{ sbsAnalysisResult.resumenIa }}
+                </p>
+              </div>
+
+              <!-- Enlace a documento de respaldo -->
+              <div *ngIf="sbsAnalysisResult.documentoUrl" class="mt-3 text-right">
+                <a [href]="sbsAnalysisResult.documentoUrl" target="_blank" class="btn btn-sm btn-outline-secondary"
+                  style="border-radius: 6px; font-size: 0.82rem;">
+                  <i class="fas fa-external-link-alt mr-1"></i> Ver Documento Original Respaldado
+                </a>
+              </div>
+            </div>
+
+            <!-- Si aún no tiene análisis y es cliente -->
+            <div *ngIf="!sbsAnalysisResult && !selectedSbsFile" class="text-center py-4 text-muted">
+              <i class="fas fa-folder-open fa-3x mb-2" style="color: #E5DDD3;"></i>
+              <p class="mb-0">Aún no se ha adjuntado el Reporte SBS. Sube el archivo PDF o captura para recibir la calificación.</p>
+            </div>
+
           </div>
         </div>
       </div>
