@@ -197,32 +197,36 @@
   background: #FAF5EE;
 }
 
-/* Modal Personalizado XAI - Explainable AI */
-.modal-backdrop-custom {
+/* ==========================================================================
+   PANEL LATERAL DESLIZABLE (SLIDE-OVER DRAWER XAI)
+   ========================================================================== */
+.drawer-backdrop {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(36, 19, 12, 0.72);
-  backdrop-filter: blur(5px);
+  background: rgba(24, 12, 7, 0.55);
   z-index: 1060;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  justify-content: flex-end;
+  animation: fadeInBackdrop 0.22s ease-out forwards;
 }
 
-.modal-dialog-custom {
-  width: 100%;
-  max-width: 760px;
-  background: #FFFFFF;
-  border-radius: 16px;
-  box-shadow: 0 20px 45px rgba(26, 13, 7, 0.35);
-  border: 1px solid #E5DDD3;
-  overflow: hidden;
-  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.drawer-panel {
+  width: 540px;
+  max-width: 95vw;
+  height: 100vh;
+  background: #FAF7F2;
+  box-shadow: -10px 0 35px rgba(24, 12, 7, 0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 1070;
+  transform: translateX(100%);
+  animation: slideInDrawer 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform;
 }
 
 .avatar-circle-lg {
@@ -239,12 +243,12 @@
   border: 2px solid #FAF7F2;
 }
 
-@keyframes fadeInModal {
+@keyframes fadeInBackdrop {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideUpModal {
-  from { transform: translateY(24px) scale(0.97); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+@keyframes slideInDrawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
