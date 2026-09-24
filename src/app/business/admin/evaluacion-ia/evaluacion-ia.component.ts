@@ -271,19 +271,16 @@ export class EvaluacionIaComponent implements OnInit {
         console.error('Error con microservicio FastAPI, usando contingencia', err);
         const fallback: ClienteEvaluado[] = features.map((f: ClienteFeatures) => {
           const raw = rawMap.get(f.id || 0) || {};
-          const riesgoAlto = f.cuotas_vencidas > 0 || f.dias_retraso_promedio > 15;
-          const score = riesgoAlto ? Math.max(15, 45 - f.cuotas_vencidas * 8) : 75 + ((f.id || 1) * 7 % 23);
-          const nivel: 'Bajo' | 'Medio' | 'Alto' = score >= 72 ? 'Bajo' : score >= 42 ? 'Medio' : 'Alto';
-          const limite = nivel === 'Bajo' ? Math.round(f.ingreso_mensual * 0.35) : nivel === 'Medio' ? 350 : 0;
+          const scoring = this.calcularScoreContinuo(f, raw);
           const item: ClienteEvaluado = {
             id: f.id,
             nombre: f.nombre,
-            probabilidad_impago: riesgoAlto ? 78.4 : 11.6,
-            score_crediticio: score,
-            nivel_riesgo: nivel,
-            limite_sugerido: limite,
-            recomendacion: nivel === 'Bajo' ? 'Aprobado para fiar' : nivel === 'Medio' ? 'Fiar con limite' : 'Denegar credito',
-            motivo_analisis: 'Análisis de riesgo basado en histórico financiero.',
+            probabilidad_impago: scoring.probDefault,
+            score_crediticio: scoring.score,
+            nivel_riesgo: scoring.nivel,
+            limite_sugerido: scoring.limite,
+            recomendacion: scoring.recomendacion,
+            motivo_analisis: scoring.motivo,
             email: raw.email,
             phone: raw.phone,
             dni: raw.dni,
@@ -292,11 +289,94 @@ export class EvaluacionIaComponent implements OnInit {
             cuotasVencidas: f.cuotas_vencidas,
             ingresoMensual: f.ingreso_mensual
           };
-          return this.aplicarConsistenciaSbs(item, raw);
+          return item;
         });
         this.esperarYFinalizar(fallback, conAnimacion);
       }
     });
+  }
+
+  private calcularScoreContinuo(f: ClienteFeatures, raw: any): { score: number; probDefault: number; nivel: 'Bajo' | 'Medio' | 'Alto'; limite: number; motivo: string; recomendacion: string } {
+    // 1. Caso crítico SBS externo registrado
+    if (raw && raw.sbsSemaforo === 'ROJO') {
+      const scoreSbs = raw.sbsScore !== null && raw.sbsScore !== undefined ? raw.sbsScore : 25;
+      return {
+        score: Math.max(5, Math.min(35, scoreSbs)),
+        probDefault: 88.5,
+        nivel: 'Alto',
+        limite: 0,
+        recomendacion: 'Denegar crédito',
+        motivo: `Alerta SBS: Calificación ${raw.sbsCalificacion || 'Dudoso/Pérdida'} en bancos con deuda de S/. ${(raw.sbsDeudaTotal || 0).toFixed(2)}. Línea bloqueada por morosidad crítica.`
+      };
+    }
+
+    // 2. Cálculo continuo de Score (Escala 0 - 100)
+    let score = 96;
+
+    // Penalización por moras internas en tienda
+    if (f.cuotas_vencidas > 0) {
+      score -= (f.cuotas_vencidas * 16.5);
+    }
+    if (f.dias_retraso_promedio > 0) {
+      score -= Math.min(40, f.dias_retraso_promedio * 1.35);
+    }
+
+    // Penalización por ratio de endeudamiento interno
+    const ratioDeuda = f.ingreso_mensual > 0 ? (f.monto_deuda_actual / f.ingreso_mensual) : 0;
+    if (ratioDeuda > 0.3) {
+      score -= Math.min(25, (ratioDeuda - 0.3) * 45);
+    }
+
+    // Bonificación por historial de compras cumplidas
+    if (f.total_compras_historico > 0) {
+      score += Math.min(10, Math.sqrt(f.total_compras_historico) * 0.25);
+    }
+
+    // Bonificación por antigüedad del cliente
+    score += Math.min(6, (f.antiguedad_meses || 6) * 0.2);
+
+    // Ajuste por SBS si es positivo
+    if (raw && raw.sbsSemaforo === 'VERDE') {
+      score = Math.min(100, score + 4);
+    } else if (raw && raw.sbsSemaforo === 'AMARILLO') {
+      score = Math.min(68, score - 15);
+    }
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+
+    // Determinación de nivel y probabilidad
+    let nivel: 'Bajo' | 'Medio' | 'Alto';
+    let probDefault: number;
+    let limite: number;
+    let recomendacion: string;
+    let motivo: string;
+
+    if (score < 45 || f.cuotas_vencidas >= 2 || f.dias_retraso_promedio > 25) {
+      nivel = 'Alto';
+      probDefault = +(75 + ((100 - score) * 0.2)).toFixed(1);
+      limite = 0;
+      recomendacion = 'Denegar crédito';
+      motivo = `Riesgo crítico (Score ${score} pts): Registra ${f.cuotas_vencidas} cuota(s) impaga(s) y ${f.dias_retraso_promedio.toFixed(0)} días de atraso. Probabilidad de impago del ${probDefault}%. Línea bloqueada.`;
+    } else if (score < 72) {
+      nivel = 'Medio';
+      probDefault = +(30 + ((72 - score) * 1.2)).toFixed(1);
+      const capacidad = Math.max(150, (f.ingreso_mensual * 0.20) - (f.monto_deuda_actual * 0.5) - (f.dias_retraso_promedio * 6));
+      limite = Math.round(Math.min(450, capacidad) / 25) * 25;
+      recomendacion = 'Fiar con límite';
+      motivo = `Perfil moderado (Score ${score} pts): Atrasos detectados (${f.dias_retraso_promedio.toFixed(0)} días). Se aprueba cupo controlado hasta S/. ${limite} supervisando cumplimiento.`;
+    } else {
+      nivel = 'Bajo';
+      probDefault = +(Math.max(2.1, (100 - score) * 0.4)).toFixed(1);
+      let baseLimite = 500;
+      if (f.total_compras_historico > 0) {
+        baseLimite = Math.max(500, (f.total_compras_historico * 1.45) - f.monto_deuda_actual);
+      }
+      limite = Math.round(Math.min(3500, baseLimite) / 50) * 50;
+      recomendacion = 'Aprobado para fiar';
+      motivo = `Excelente cumplimiento (Score ${score} pts): Sin morosidad y flujo comercial positivo. Línea ampliada a S/. ${limite}.`;
+    }
+
+    return { score, probDefault, nivel, limite, motivo, recomendacion };
   }
 
   private aplicarConsistenciaSbs(item: ClienteEvaluado, raw: any): ClienteEvaluado {
@@ -306,7 +386,7 @@ export class EvaluacionIaComponent implements OnInit {
     if (raw.sbsSemaforo) {
       if (raw.sbsSemaforo === 'ROJO' || (raw.sbsScore !== null && raw.sbsScore !== undefined && raw.sbsScore < 50)) {
         item.nivel_riesgo = 'Alto';
-        item.score_crediticio = raw.sbsScore || 30;
+        item.score_crediticio = raw.sbsScore !== null && raw.sbsScore !== undefined ? raw.sbsScore : 25;
         item.probabilidad_impago = 88.5;
         item.limite_sugerido = 0;
         item.recomendacion = 'Denegar crédito';
@@ -319,7 +399,6 @@ export class EvaluacionIaComponent implements OnInit {
         item.recomendacion = 'Fiar con límite';
         item.motivo_analisis = `Observación SBS: Calificación ${raw.sbsCalificacion || 'CPP'} con problemas potenciales en el sistema financiero. Fiado preventivo limitado a S/. ${item.limite_sugerido}.`;
       } else if (raw.sbsSemaforo === 'VERDE') {
-        // SBS 100% Normal
         if (item.cuotasVencidas > 0 || item.diasRetrasoPromedio > 15) {
           item.nivel_riesgo = 'Medio';
           item.score_crediticio = 68;

@@ -663,13 +663,13 @@
                   <div class="p-3 rounded-lg text-center h-100 shadow-sm"
                     style="background: #FAF7F2; border: 1px solid #E5DDD3; border-radius: 12px;">
                     <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px;">Score IA (0-100)</small>
-                    <h3 class="font-weight-bold my-2" style="color: #C59B6D;">
-                      {{ sbsAnalysisResult.scoreCrediticio || userProfile?.sbsScore || 90 }} <small style="font-size: 1rem; color: #8C7B72;">pts</small>
+                    <h3 class="font-weight-bold my-2" [style.color]="(sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0)) >= 75 ? '#166534' : ((sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0)) >= 50 ? '#D97706' : '#DC2626')">
+                      {{ (sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0)) }} <small style="font-size: 1rem; color: #8C7B72;">pts</small>
                     </h3>
                     <div class="progress" style="height: 6px; border-radius: 4px; background: #E5DDD3;">
                       <div class="progress-bar" role="progressbar"
-                        [style.width.%]="sbsAnalysisResult.scoreCrediticio || userProfile?.sbsScore || 90"
-                        [ngStyle]="{'background': (sbsAnalysisResult.scoreCrediticio || 90) >= 75 ? '#166534' : ((sbsAnalysisResult.scoreCrediticio || 90) >= 50 ? '#D97706' : '#DC2626')}">
+                        [style.width.%]="(sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0))"
+                        [ngStyle]="{'background': (sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0)) >= 75 ? '#166534' : ((sbsAnalysisResult.scoreCrediticio !== null && sbsAnalysisResult.scoreCrediticio !== undefined ? sbsAnalysisResult.scoreCrediticio : (userProfile?.sbsScore !== null && userProfile?.sbsScore !== undefined ? userProfile?.sbsScore : 0)) >= 50 ? '#D97706' : '#DC2626')}">
                       </div>
                     </div>
                   </div>
