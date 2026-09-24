@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    EVALUACIÓN IA - COMERCIAL REYES (ESPRESSO & CREMA NOBLE)
    ========================================================================== */
 
@@ -198,57 +198,130 @@
 }
 
 /* ==========================================================================
-   PANEL LATERAL DESLIZABLE (SLIDE-OVER DRAWER XAI)
+   PANEL LATERAL INTELIGENTE (XAI SMART DRAWER / EXPLAINABLE AI)
    ========================================================================== */
 .drawer-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(24, 12, 7, 0.55);
-  z-index: 1060;
-  display: flex;
-  justify-content: flex-end;
-  animation: fadeInBackdrop 0.22s ease-out forwards;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(18, 9, 5, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+  animation: fadeInDrawerBackdrop 0.25s ease-out forwards;
 }
 
 .drawer-panel {
-  width: 540px;
-  max-width: 95vw;
-  height: 100vh;
-  background: #FAF7F2;
-  box-shadow: -10px 0 35px rgba(24, 12, 7, 0.25);
-  display: flex;
-  flex-direction: column;
-  z-index: 1070;
-  transform: translateX(100%);
-  animation: slideInDrawer 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width: 560px !important;
+  max-width: 95vw !important;
+  height: 100vh !important;
+  background: #FAF7F2 !important;
+  box-shadow: -15px 0 45px rgba(18, 9, 5, 0.4) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 100000 !important;
+  transform: translate3d(100%, 0, 0) !important;
+  animation: slideInDrawer 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   will-change: transform;
+}
+
+.drawer-header {
+  background: linear-gradient(135deg, #1C0F08 0%, #2E170C 100%) !important;
+  border-bottom: 2px solid #C59B6D !important;
 }
 
 .avatar-circle-lg {
   width: 52px;
   height: 52px;
+  min-width: 52px;
   border-radius: 50%;
-  background: #C59B6D;
-  color: #24130C;
+  background: linear-gradient(135deg, #FAD082 0%, #C59B6D 100%);
+  color: #180B06;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #FAF7F2;
+  border: 2px solid #FFE2A8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-@keyframes fadeInBackdrop {
+.btn-close-drawer {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close-drawer:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  transform: rotate(90deg) scale(1.05);
+}
+
+.hero-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E5DDD3 !important;
+  border-radius: 14px;
+}
+
+.factor-card {
+  background: #FFFFFF;
+  border: 1px solid #E5DDD3 !important;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.factor-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(44, 24, 16, 0.08);
+}
+
+.xai-explanation-box {
+  background: #FFFFFF;
+  border: 2px solid #C59B6D !important;
+  border-radius: 14px;
+}
+
+.xai-bulb-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: #FEF7EA;
+  color: #8C5D30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  border: 1px solid #F5E3C8;
+}
+
+.drawer-footer {
+  background: #FFFFFF !important;
+  border-color: #E5DDD3 !important;
+}
+
+@keyframes fadeInDrawerBackdrop {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes slideInDrawer {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }

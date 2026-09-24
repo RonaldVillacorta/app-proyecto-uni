@@ -1,4 +1,4 @@
-<div class="evaluacion-ia-container animate__animated animate__fadeIn">
+﻿<div class="evaluacion-ia-container animate__animated animate__fadeIn">
 
   <!-- ENCABEZADO PRINCIPAL -->
   <div class="row mb-4">
@@ -456,148 +456,165 @@
         </div>
       </div>
     </div>
+  </div> <!-- Cierra results-fade-wrapper -->
 
-    <!-- PANEL LATERAL DESLIZABLE (SLIDE-OVER DRAWER XAI) -->
-    <div class="drawer-backdrop" *ngIf="modalDetalleVisible && clienteSeleccionado" (click)="cerrarModalDetalle()">
-      <div class="drawer-panel" (click)="$event.stopPropagation()">
-        
-        <!-- Header del Drawer -->
-        <div class="p-4 d-flex justify-content-between align-items-center" style="background: #24130C; border-bottom: 1px solid #3D2214;">
-          <div class="d-flex align-items-center gap-3">
-            <div class="avatar-circle-lg mr-2">
-              {{ getIniciales(clienteSeleccionado.nombre) }}
+  <!-- ======================================================================
+       PANEL INSPECTOR INTELIGENTE (XAI SMART DRAWER / EXPLAINABLE AI)
+       ====================================================================== -->
+  <div class="drawer-backdrop" *ngIf="modalDetalleVisible && clienteSeleccionado" (click)="cerrarModalDetalle()">
+    <div class="drawer-panel" (click)$event.stopPropagation()>
+      
+      <!-- Header del Drawer con Degradado Espresso & Crema Noble -->
+      <div class="drawer-header p-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <div class="avatar-circle-lg mr-3 shadow-sm">
+            {{ getIniciales(clienteSeleccionado.nombre) }}
+          </div>
+          <div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h5 class="mb-0 font-weight-bold text-white mr-2" style="font-family: 'Lora', serif; font-size: 1.15rem; letter-spacing: 0.3px;">
+                {{ clienteSeleccionado.nombre }}
+              </h5>
+              <span class="badge px-2 py-1 font-weight-bold"
+                    [style.background-color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#DCFCE7' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#FEF7EA' : '#FEECEB')"
+                    [style.color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#166534' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#9A5B13' : '#991B1B')"
+                    style="border-radius: 6px; font-size: 0.76rem;">
+                Riesgo {{ clienteSeleccionado.nivel_riesgo }}
+              </span>
+            </div>
+            <div class="text-white-50 small mt-1">
+              <span class="mr-3"><i class="fas fa-id-card mr-1" style="color: #C59B6D;"></i> DNI: <strong class="text-white">{{ clienteSeleccionado.dni || 'Sin DNI' }}</strong></span>
+              <span><i class="fas fa-history mr-1" style="color: #C59B6D;"></i> {{ clienteSeleccionado.antiguedadMeses }} meses en el negocio</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-close-drawer" (click)="cerrarModalDetalle()" title="Cerrar panel (Esc)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Contenido Deslizable Interno (Scrollbar suave) -->
+      <div class="drawer-body p-4 flex-grow-1 overflow-auto">
+
+        <!-- TARJETA HERO: LMITE SUGERIDO & SCORE GAUGE -->
+        <div class="hero-kpi-card p-3 mb-4 rounded-3 d-flex justify-content-between align-items-center shadow-sm">
+          <div class="d-flex align-items-center">
+            <div class="p-3 rounded-circle mr-3" [style.background]="clienteSeleccionado.limite_sugerido > 0 ? '#DCFCE7' : '#FEECEB'">
+              <i class="fas" [ngClass]="clienteSeleccionado.limite_sugerido > 0 ? 'fa-wallet text-success' : 'fa-ban text-danger'" style="font-size: 1.5rem;"></i>
             </div>
             <div>
-              <div class="d-flex align-items-center gap-2">
-                <h5 class="mb-0 font-weight-bold text-white" style="font-family: 'Lora', serif;">{{ clienteSeleccionado.nombre }}</h5>
-                <span class="badge px-2 py-1 font-weight-bold"
-                      [style.background-color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#DCFCE7' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#FEF7EA' : '#FEECEB')"
-                      [style.color]="clienteSeleccionado.nivel_riesgo === 'Bajo' ? '#166534' : (clienteSeleccionado.nivel_riesgo === 'Medio' ? '#9A5B13' : '#991B1B')">
-                  Riesgo {{ clienteSeleccionado.nivel_riesgo }}
-                </span>
-              </div>
-              <small class="text-white-50">DNI: {{ clienteSeleccionado.dni || 'Sin DNI' }} • {{ clienteSeleccionado.antiguedadMeses }} meses en el sistema</small>
+              <small class="text-uppercase font-weight-bold d-block" style="color: #8C7B72; letter-spacing: 0.8px; font-size: 0.72rem;">LMITE SUGERIDO IA</small>
+              <h3 class="mb-0 font-weight-bold" [style.color]="clienteSeleccionado.limite_sugerido > 0 ? '#166534' : '#DC2626'" style="letter-spacing: -0.5px;">
+                S/. {{ clienteSeleccionado.limite_sugerido | number:'1.2-2' }}
+              </h3>
             </div>
           </div>
-          <button class="btn btn-sm text-white" style="background: rgba(255,255,255,0.12); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;" (click)="cerrarModalDetalle()">
-            <i class="fas fa-times"></i>
-          </button>
+
+          <div class="d-flex align-items-center">
+            <div class="text-right mr-3">
+              <small class="text-uppercase font-weight-bold d-block" style="color: #8C7B72; letter-spacing: 0.8px; font-size: 0.72rem;">SCORE IA</small>
+              <div class="h4 mb-0 font-weight-bold" [style.color]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')">
+                {{ clienteSeleccionado.score_crediticio }} <small style="font-size: 0.8rem; color: #8C7B72;">pts</small>
+              </div>
+            </div>
+            <div style="width: 52px; height: 52px; position: relative;">
+              <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5DDD3" stroke-width="3.5" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                      [attr.stroke]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')"
+                      stroke-width="3.5" stroke-dasharray="100, 100" [attr.stroke-dashoffset]="100 - clienteSeleccionado.score_crediticio" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- Contenido Deslizable -->
-        <div class="p-4 flex-grow-1 overflow-auto" style="background: #FAF7F2;">
-
-          <!-- TARJETA DESTACADA: LÍMITE Y SCORE -->
-          <div class="p-3 mb-4 rounded-3 d-flex justify-content-between align-items-center shadow-sm"
-               style="background: #FFFFFF; border: 1px solid #E5DDD3;">
-            <div class="d-flex align-items-center gap-3">
-              <div class="p-3 rounded-circle mr-2" [style.background]="clienteSeleccionado.limite_sugerido > 0 ? '#DCFCE7' : '#FEECEB'">
-                <i class="fas" [ngClass]="clienteSeleccionado.limite_sugerido > 0 ? 'fa-wallet text-success' : 'fa-ban text-danger'" style="font-size: 1.4rem;"></i>
-              </div>
-              <div>
-                <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px; font-size: 0.72rem;">LÍMITE SUGERIDO IA</small>
-                <h3 class="mb-0 font-weight-bold" [style.color]="clienteSeleccionado.limite_sugerido > 0 ? '#166534' : '#DC2626'">
-                  S/. {{ clienteSeleccionado.limite_sugerido | number:'1.2-2' }}
-                </h3>
+        <!-- AUDITORA DE FACTORES CLAVE (MACHINE LEARNING) -->
+        <div class="mb-4">
+          <h6 class="font-weight-bold mb-3 d-flex align-items-center" style="color: #2C1810; font-family: 'Lora', serif; font-size: 0.96rem;">
+            <i class="fas fa-sliders-h mr-2" style="color: #C59B6D;"></i> Factores Determinantes del Modelo (XAI)
+          </h6>
+          
+          <div class="row g-2">
+            <!-- Factor 1: Sueldo / Ingreso Mensual -->
+            <div class="col-6 mb-2">
+              <div class="factor-card p-3 rounded h-100 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <small class="text-uppercase font-weight-bold" style="color: #8C7B72; font-size: 0.68rem;">1. Ingreso Mensual</small>
+                  <span class="badge" [ngClass]="clienteSeleccionado.ingresoDeclarado ? 'badge-success' : 'badge-light'"
+                        style="font-size: 0.62rem;" [title]="clienteSeleccionado.ingresoDeclarado ? 'Ingresado por el usuario/admin' : 'Estimacin base'">
+                    {{ clienteSeleccionado.ingresoDeclarado ? 'Declarado' : 'Estimado' }}
+                  </span>
+                </div>
+                <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.ingresoMensual | number:'1.2-2' }}</div>
+                <small style="color: #66564E; font-size: 0.72rem;">Capacidad econmica base</small>
               </div>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
-              <div class="text-end mr-2">
-                <small class="text-uppercase font-weight-bold" style="color: #8C7B72; letter-spacing: 0.5px; font-size: 0.72rem;">SCORE IA</small>
-                <div class="h4 mb-0 font-weight-bold" [style.color]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')">
-                  {{ clienteSeleccionado.score_crediticio }} <small style="font-size: 0.8rem; color: #8C7B72;">pts</small>
-                </div>
+            <!-- Factor 2: Capacidad Libre Estimada (30%) -->
+            <div class="col-6 mb-2">
+              <div class="factor-card p-3 rounded h-100 shadow-sm">
+                <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.68rem;">2. Capacidad Libre</small>
+                <div class="font-weight-bold h6 mb-0" style="color: #166534;">S/. {{ clienteSeleccionado.capacidadPagoEstimada | number:'1.2-2' }}</div>
+                <small style="color: #66564E; font-size: 0.72rem;">Margen mensual prudente (30%)</small>
               </div>
-              <div style="width: 48px; height: 48px; position: relative;">
-                <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E5DDD3" stroke-width="3.5" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
-                        [attr.stroke]="clienteSeleccionado.score_crediticio >= 72 ? '#166534' : (clienteSeleccionado.score_crediticio >= 42 ? '#D97706' : '#DC2626')"
-                        stroke-width="3.5" stroke-dasharray="100, 100" [attr.stroke-dashoffset]="100 - clienteSeleccionado.score_crediticio" stroke-linecap="round" />
-                </svg>
+            </div>
+
+            <!-- Factor 3: Historial de Compras en Tienda -->
+            <div class="col-6 mb-2">
+              <div class="factor-card p-3 rounded h-100 shadow-sm">
+                <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.68rem;">3. Compras Pagadas</small>
+                <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.totalComprasHistorico | number:'1.2-2' }}</div>
+                <small style="color: #66564E; font-size: 0.72rem;">Volumen cancelado en tienda</small>
+              </div>
+            </div>
+
+            <!-- Factor 4: Deuda Vigente & Das de Mora -->
+            <div class="col-6 mb-2">
+              <div class="factor-card p-3 rounded h-100 shadow-sm">
+                <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.68rem;">4. Deuda & Mora</small>
+                <div class="font-weight-bold h6 mb-0" [style.color]="clienteSeleccionado.montoDeudaActual > 0 ? '#DC2626' : '#166534'">
+                  S/. {{ clienteSeleccionado.montoDeudaActual | number:'1.2-2' }}
+                </div>
+                <small style="color: #66564E; font-size: 0.72rem;">{{ clienteSeleccionado.cuotasVencidas }} cuotas, {{ clienteSeleccionado.diasRetrasoPromedio.toFixed(0) }}d atraso</small>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 4 FACTORES FINANCIEROS DEL MODELO -->
-          <div class="mb-4">
-            <h6 class="font-weight-bold mb-3 d-flex align-items-center" style="color: #2C1810; font-family: 'Lora', serif;">
-              <i class="fas fa-sliders-h mr-2" style="color: #C59B6D;"></i> Factores Clave del Modelo de IA
+        <!-- DIAGNSTICO Y TRANSPARENCIA ALGORMTICA (EXPLAINABLE AI) -->
+        <div class="xai-explanation-box p-4 mb-3 rounded-3 shadow-sm">
+          <div class="d-flex align-items-center mb-2">
+            <span class="xai-bulb-icon mr-2">
+              <i class="fas fa-lightbulb"></i>
+            </span>
+            <h6 class="mb-0 font-weight-bold" style="color: #2C1810; font-family: 'Lora', serif; font-size: 0.96rem;">
+              Por qu la IA asign este Lmite?
             </h6>
-            
-            <div class="row g-2">
-              <div class="col-6">
-                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
-                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.7rem;">1. Ingreso Mensual</small>
-                  <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.ingresoMensual | number:'1.2-2' }}</div>
-                  <small style="color: #66564E; font-size: 0.72rem;">Capacidad económica base</small>
-                </div>
-              </div>
-
-              <div class="col-6">
-                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
-                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.7rem;">2. Capacidad Libre</small>
-                  <div class="font-weight-bold h6 mb-0" style="color: #166534;">S/. {{ clienteSeleccionado.capacidadPagoEstimada | number:'1.2-2' }}</div>
-                  <small style="color: #66564E; font-size: 0.72rem;">Liquidez mensual disponible</small>
-                </div>
-              </div>
-
-              <div class="col-6">
-                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
-                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.7rem;">3. Compras Pagadas</small>
-                  <div class="font-weight-bold h6 mb-0" style="color: #241A15;">S/. {{ clienteSeleccionado.totalComprasHistorico | number:'1.2-2' }}</div>
-                  <small style="color: #66564E; font-size: 0.72rem;">Volumen cancelado</small>
-                </div>
-              </div>
-
-              <div class="col-6">
-                <div class="p-3 rounded h-100 shadow-sm" style="background: #FFFFFF; border: 1px solid #E5DDD3;">
-                  <small class="text-uppercase font-weight-bold d-block mb-1" style="color: #8C7B72; font-size: 0.7rem;">4. Deuda & Retraso</small>
-                  <div class="font-weight-bold h6 mb-0" [style.color]="clienteSeleccionado.montoDeudaActual > 0 ? '#DC2626' : '#166534'">
-                    S/. {{ clienteSeleccionado.montoDeudaActual | number:'1.2-2' }}
-                  </div>
-                  <small style="color: #66564E; font-size: 0.72rem;">{{ clienteSeleccionado.cuotasVencidas }} cuotas, {{ clienteSeleccionado.diasRetrasoPromedio.toFixed(0) }}d mora</small>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <!-- DIAGNÓSTICO Y JUSTIFICACIÓN (XAI) -->
-          <div class="p-4 mb-3 rounded-3 shadow-sm" style="background: #FFFFFF; border: 2px solid #C59B6D;">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="p-2 rounded-circle mr-2" style="background: #FEF7EA; color: #8C5D30;">
-                <i class="fas fa-lightbulb"></i>
-              </span>
-              <h6 class="mb-0 font-weight-bold" style="color: #2C1810; font-family: 'Lora', serif;">
-                ¿Por qué la IA asigna este Límite?
-              </h6>
-            </div>
+          <p class="mb-3" style="color: #241A15; font-size: 0.91rem; line-height: 1.6;">
+            {{ clienteSeleccionado.explicacionLimite }}
+          </p>
 
-            <p class="mb-3" style="color: #241A15; font-size: 0.92rem; line-height: 1.6;">
-              {{ clienteSeleccionado.explicacionLimite }}
-            </p>
-
-            <div class="p-3 rounded" style="background: #F9F6F0; border-left: 4px solid #C59B6D;">
-              <small class="d-block" style="color: #66564E; line-height: 1.5;">
-                <strong style="color: #2C1810;">Relación Score vs. Límite:</strong> 
-                El <strong>Score</strong> mide la <em>probabilidad de cumplimiento</em> (voluntad de pago), mientras que el <strong>Límite</strong> mide su <em>capacidad económica real</em> (ingreso y volumen de compra comprobado).
-              </small>
-            </div>
+          <div class="p-3 rounded" style="background: #F4EFE6; border-left: 4px solid #C59B6D;">
+            <small class="d-block" style="color: #55443B; line-height: 1.55;">
+              <strong style="color: #2C1810;"><i class="fas fa-balance-scale mr-1"></i> Fundamento Acadmico:</strong> 
+              El <strong>Score (0-100)</strong> evala la <em>probabilidad de cumplimiento</em> (voluntad y puntualidad de pago). En contraste, el <strong>Lmite (S/.)</strong> refleja la <em>capacidad financiera y hbito de consumo</em>. Un cliente puntual pero con ingresos moderados obtendr un score alto con un lmite prudente para proteger sus finanzas de sobreendeudamiento.
+            </small>
           </div>
-
-        </div>
-
-        <!-- Footer del Drawer -->
-        <div class="p-3 d-flex justify-content-end border-top" style="background: #FFFFFF; border-color: #E5DDD3 !important;">
-          <button class="btn btn-sm px-4 font-weight-bold" style="background: #2C1810; color: #F7EAD9; border-radius: 8px;" (click)="cerrarModalDetalle()">
-            Cerrar Panel
-          </button>
         </div>
 
       </div>
-    </div>
 
+      <!-- Footer del Drawer -->
+      <div class="drawer-footer p-3 d-flex justify-content-between align-items-center border-top">
+        <small class="text-muted"><i class="fas fa-keyboard mr-1"></i> Pulsa <kbd style="background: #E5DDD3; color: #2C1810; padding: 2px 6px; border-radius: 4px; font-size: 0.76rem;">Esc</kbd> para cerrar</small>
+        <button type="button" class="btn btn-sm px-4 font-weight-bold" style="background: #2C1810; color: #F7EAD9; border-radius: 8px; box-shadow: 0 2px 6px rgba(44, 24, 16, 0.2);" (click)="cerrarModalDetalle()">
+          <i class="fas fa-check mr-1"></i> Entendido
+        </button>
+      </div>
+
+    </div>
   </div>
 
-</div>
+</div> <!-- Cierra evaluacion-ia-container -->

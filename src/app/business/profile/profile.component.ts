@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../shared/services/user.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { VentaService } from '../../shared/services/venta.service';
@@ -69,6 +69,7 @@ export default class ProfileComponent implements OnInit {
       dni: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
       phone: ['', [Validators.required, Validators.pattern('^[0-9]{9}$')]],
       address: ['', [Validators.required]],
+      ingresoMensual: [null, [Validators.min(0)]],
       email: [
         { value: '', disabled: true },
         [Validators.required, Validators.email],
@@ -102,6 +103,7 @@ export default class ProfileComponent implements OnInit {
           dni: this.userProfile.dni || '',
           phone: this.userProfile.phone || '',
           address: this.userProfile.address || '',
+          ingresoMensual: this.userProfile.ingresoMensual || null,
           email: this.userProfile.email || '',
         });
 
@@ -329,6 +331,7 @@ export default class ProfileComponent implements OnInit {
       dni: this.userProfile.dni || '',
       phone: this.userProfile.phone || '',
       address: this.userProfile.address || '',
+          ingresoMensual: this.userProfile.ingresoMensual || null,
       email: this.userProfile.email || '',
     });
   }
@@ -653,3 +656,4 @@ export default class ProfileComponent implements OnInit {
     });
   }
 }
+

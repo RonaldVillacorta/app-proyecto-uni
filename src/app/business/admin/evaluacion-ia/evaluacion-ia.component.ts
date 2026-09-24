@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -24,6 +24,7 @@ export interface ClienteEvaluado extends EvaluacionIAResponse {
   antiguedadMeses: number;
   capacidadPagoEstimada: number;
   explicacionLimite: string;
+  ingresoDeclarado?: boolean;
 }
 
 @Component({
@@ -145,7 +146,9 @@ export class EvaluacionIaComponent implements OnInit {
         clientes.forEach((c: any) => {
           rawClientesMap.set(c.id, c);
 
-          const seedIngreso = 1400 + ((c.id * 317) % 2800);
+          const tieneIngreso = !!(c.ingresoMensual && Number(c.ingresoMensual) > 0);
+          const seedIngreso = tieneIngreso ? Number(c.ingresoMensual) : (1025 + ((c.id * 317) % 2500));
+          c.ingresoDeclarado = tieneIngreso;
           const antiguedad = 6 + ((c.id * 7) % 36);
 
           this.creditoService.obtenerCreditosPorCliente(c.id).subscribe({
@@ -277,6 +280,7 @@ export class EvaluacionIaComponent implements OnInit {
             totalComprasHistorico: compras,
             antiguedadMeses: antiguedad,
             capacidadPagoEstimada: capacidad,
+            ingresoDeclarado: raw.ingresoDeclarado ?? !!(raw.ingresoMensual && Number(raw.ingresoMensual) > 0),
             explicacionLimite: this.generarExplicacionLimite(r.limite_sugerido, r.score_crediticio, ingreso, capacidad, compras, cuotas, dias, raw.sbsSemaforo)
           };
           return this.aplicarConsistenciaSbs(item, raw);
@@ -309,6 +313,7 @@ export class EvaluacionIaComponent implements OnInit {
             totalComprasHistorico: f.total_compras_historico,
             antiguedadMeses: f.antiguedad_meses,
             capacidadPagoEstimada: capacidad,
+            ingresoDeclarado: raw.ingresoDeclarado ?? !!(raw.ingresoMensual && Number(raw.ingresoMensual) > 0),
             explicacionLimite: this.generarExplicacionLimite(scoring.limite, scoring.score, f.ingreso_mensual, capacidad, f.total_compras_historico, f.cuotas_vencidas, f.dias_retraso_promedio, raw.sbsSemaforo)
           };
           return item;
@@ -565,6 +570,13 @@ export class EvaluacionIaComponent implements OnInit {
     this.seleccionarCliente(cliente);
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.modalDetalleVisible) {
+      this.cerrarModalDetalle();
+    }
+  }
+
   cerrarModalDetalle(): void {
     this.modalDetalleVisible = false;
   }
@@ -594,3 +606,4 @@ export class EvaluacionIaComponent implements OnInit {
     return (nombre || 'CR').substring(0, 2).toUpperCase();
   }
 }
+

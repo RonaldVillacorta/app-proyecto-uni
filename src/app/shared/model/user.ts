@@ -17,6 +17,7 @@ export class User  {
   sbsSemaforo?: string;
   sbsFechaEvaluacion?: string;
   sbsDocumentoUrl?: string;
+  ingresoMensual?: number;
 }
 
 export interface SbsAnalysisResult {

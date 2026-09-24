@@ -1,4 +1,4 @@
-<div class="container-fluid">
+﻿<div class="container-fluid">
   <!-- Header principal con estilo Espresso Noble suave -->
   <div class="row mb-4">
     <div class="col-12">
@@ -187,6 +187,14 @@
                 <div class="p-3 rounded" style="background: #F5F1EB; border: 1px solid #E5DDD3;">
                   <p class="small mb-1" style="color: #66564E;">Dirección</p>
                   <h6 class="mb-0" style="color: #241A15;">{{ userProfile?.address || 'No especificada' }}</h6>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 rounded" style="background: #F5F1EB; border: 1px solid #E5DDD3;">
+                    <p class="small mb-1" style="color: #66564E;">Sueldo / Ingreso Mensual Declarado</p>
+                    <h6 class="mb-0 font-weight-bold" style="color: #166534;">
+                      {{ userProfile?.ingresoMensual ? ('S/. ' + (userProfile.ingresoMensual | number:'1.2-2')) : 'No declarado (Base IA S/. 1,025)' }}
+                    </h6>
                 </div>
               </div>
             </div>
@@ -472,10 +480,17 @@
                       style="background: #FFFFFF; border: 1px solid #E5DDD3; color: #241A15; border-radius: 0.5rem;">
                     <div *ngIf="editProfileForm.get('address')?.invalid && editProfileForm.get('address')?.touched"
                       class="text-danger mt-1 small">
-                      Dirección es requerida
+                      Direccin es requerida
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <div class="col-md-6 mb-3">
+                    <div class="form-group">
+                      <label style="color: #66564E; font-weight: 600;">Sueldo / Ingreso Mensual (S/.) <span class="badge badge-light" style="color: #8C7B72; font-size: 0.72rem;">Opcional</span></label>
+                      <input type="number" step="50" min="0" class="form-control" formControlName="ingresoMensual" placeholder="Ej: 1500.00" style="background: #FFFFFF; border: 1px solid #E5DDD3; color: #241A15; border-radius: 0.5rem;">
+                      <small class="form-text text-muted" style="font-size: 0.76rem;">Utilizado por la IA para calcular tu lmite de crdito.</small>
+                    </div>
+                  </div>
                 <div class="col-md-6 mb-3">
                   <div class="form-group">
                     <label style="color: #66564E; font-weight: 600;">Email</label>
@@ -769,3 +784,4 @@
     background: rgba(197,155,109,0.15) !important;
   }
 </style>
+

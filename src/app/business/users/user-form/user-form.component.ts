@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { User } from '../../../shared/model/user';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../shared/services/user.service';
@@ -176,7 +176,8 @@ export class UserFormComponent implements OnInit {
     }
 
     this.evaluandoIa = true;
-    const ingreso = Number(this.ingresoDeclarado) || 1500;
+    const formIngreso = Number(this.userForm.get('ingresoMensual')?.value);
+    const ingreso = (formIngreso && formIngreso > 0) ? formIngreso : (Number(this.ingresoDeclarado) || 1500);
 
     const payload = {
       nombre: nombre || 'Cliente Nuevo',
@@ -218,6 +219,7 @@ export class UserFormComponent implements OnInit {
       dni: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
       phone: ['', [Validators.pattern(/^\d{9}$/)]],
       address: [''],
+      ingresoMensual: [null, [Validators.min(0)]],
       // Solo incluimos email en modo edición, pero lo deshabilitamos
       ...(this.isEditMode ? { email: [{ value: '', disabled: true }] } : {}),
       // La contraseña es opcional en modo edición
@@ -238,6 +240,7 @@ export class UserFormComponent implements OnInit {
             phone: this.user.phone,
             address: this.user.address,
             email: this.user.email,
+            ingresoMensual: this.user.ingresoMensual || null,
           });
           this.loading = false;
         },
@@ -377,3 +380,4 @@ export class UserFormComponent implements OnInit {
     return field ? field.invalid && field.touched : false;
   }
 }
+
