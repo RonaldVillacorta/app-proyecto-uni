@@ -151,7 +151,7 @@ export class EvaluacionIaComponent implements OnInit {
                 featuresList.push({
                   id: c.id,
                   nombre: (c.name + ' ' + (c.lastname || '')).trim(),
-                  ingreso_mensual: 1800.0,
+                  ingreso_mensual: seedIngreso,
                   monto_deuda_actual: 0.0,
                   dias_retraso_promedio: 0.0,
                   cuotas_vencidas: 0,
