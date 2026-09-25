@@ -462,7 +462,7 @@
        PANEL INSPECTOR INTELIGENTE (XAI SMART DRAWER / EXPLAINABLE AI)
        ====================================================================== -->
   <div class="drawer-backdrop" *ngIf="modalDetalleVisible && clienteSeleccionado" (click)="cerrarModalDetalle()">
-    <div class="drawer-panel" (click)$event.stopPropagation()>
+    <div class="drawer-panel" (click)="$event.stopPropagation()">
       
       <!-- Header del Drawer con Degradado Espresso & Crema Noble -->
       <div class="drawer-header p-4 d-flex justify-content-between align-items-center">
@@ -618,3 +618,4 @@
   </div>
 
 </div> <!-- Cierra evaluacion-ia-container -->
+
