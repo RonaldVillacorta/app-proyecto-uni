@@ -8,8 +8,9 @@
         <div class="d-flex justify-content-between align-items-center">
           <div>
             <h1 class="display-5 font-weight-bold mb-0">{{ isEditMode ? 'Editar Cliente' : 'Nuevo Cliente' }}</h1>
-            <p class="lead mt-2 mb-0 opacity-75">{{ isEditMode ? 'Actualiza la información del cliente' : 'Registra un
-              nuevo cliente en el sistema' }}</p>
+            <p class="lead mt-2 mb-0 opacity-75">
+              {{ isEditMode ? 'Actualiza la informacin del cliente' : 'Registra los datos del cliente para compras y crditos en la tienda' }}
+            </p>
           </div>
           <div>
             <a routerLink="/users" class="btn"
@@ -27,20 +28,13 @@
     <div class="col-lg-8">
       <div class="card"
         style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 8px 24px rgba(44, 24, 16, 0.12); border: 1px solid #E5DDD3; overflow: hidden;">
-        <div class="card-header d-flex justify-content-between align-items-center py-3 px-4"
+        
+        <div class="card-header py-3 px-4"
           style="background: linear-gradient(135deg, #2C1810 0%, #361E14 100%); border-bottom: 2px solid #C59B6D;">
           <h5 class="mb-0 font-weight-bold" style="font-size: 1.15rem; letter-spacing: 0.3px; color: #FFFFFF !important;">
             <i class="fas" [ngClass]="isEditMode ? 'fa-user-edit' : 'fa-user-plus'" class="mr-2" style="color: #FAD082;"></i>
-            {{ isEditMode ? 'Formulario de Edición' : 'Formulario de Registro de Cliente' }}
+            {{ isEditMode ? 'Formulario de Edicin de Cliente' : 'Formulario de Registro de Cliente' }}
           </h5>
-
-          <!-- Botón notorio y dinámico en la esquina superior derecha -->
-          <button *ngIf="!isEditMode" type="button" class="btn btn-consultar-dni-top"
-            (click)="abrirModalConsulta()" title="Consultar identidad en RENIEC">
-            <i class="fas fa-search mr-2"></i>
-            <span>Consultar DNI / RENIEC</span>
-            <span class="badge ml-2" style="background: rgba(24, 11, 6, 0.25); color: #180B06; font-size: 0.7rem; font-weight: 800; border-radius: 4px;">AUTO</span>
-          </button>
         </div>
 
         <!-- Loading indicator -->
@@ -48,16 +42,19 @@
           <div class="spinner-border text-warning" role="status">
             <span class="sr-only">Cargando...</span>
           </div>
-          <p class="mt-3 font-weight-bold" style="color: #2C1810;">{{ isEditMode ? 'Cargando datos del cliente...' : 'Procesando...' }}</p>
+          <p class="mt-3 font-weight-bold" style="color: #2C1810;">{{ isEditMode ? 'Cargando datos del cliente...' : 'Guardando informacin...' }}</p>
         </div>
 
         <!-- Formulario -->
         <div *ngIf="!loading" class="card-body p-4" style="background: #FAF7F2;">
           <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+            
             <!-- Primera fila: Nombre y Apellido -->
             <div class="row mb-3">
               <div class="col-md-6 mb-3 mb-md-0">
-                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">Nombre (*)</label>
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                  Nombre <span class="text-danger">*</span>
+                </label>
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <span class="input-group-text"
@@ -65,20 +62,22 @@
                       <i class="fas fa-user"></i>
                     </span>
                   </div>
-                  <input type="text" class="form-control" formControlName="name" placeholder="Ingrese su nombre"
+                  <input type="text" class="form-control" formControlName="name" placeholder="Ej: Ronald"
                     [ngClass]="{'is-invalid': hasError('name')}"
                     style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-weight: 500;">
                 </div>
-                <div *ngIf="hasError('name')" class="text-danger mt-1">
+                <div *ngIf="hasError('name')" class="text-danger mt-1 small">
                   {{ getFieldErrorMessage('name') }}
                 </div>
-                <div *ngIf="errorValidationBackend?.name" class="text-danger mt-1">
+                <div *ngIf="errorValidationBackend?.name" class="text-danger mt-1 small">
                   {{ errorValidationBackend.name }}
                 </div>
               </div>
 
               <div class="col-md-6">
-                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">Apellido (*)</label>
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                  Apellido <span class="text-danger">*</span>
+                </label>
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <span class="input-group-text"
@@ -86,26 +85,25 @@
                       <i class="fas fa-user"></i>
                     </span>
                   </div>
-                  <input type="text" class="form-control" formControlName="lastname" placeholder="Ingrese su apellido"
+                  <input type="text" class="form-control" formControlName="lastname" placeholder="Ej: Villacorta"
                     [ngClass]="{'is-invalid': hasError('lastname')}"
                     style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-weight: 500;">
                 </div>
-                <div *ngIf="hasError('lastname')" class="text-danger mt-1">
+                <div *ngIf="hasError('lastname')" class="text-danger mt-1 small">
                   {{ getFieldErrorMessage('lastname') }}
                 </div>
-                <div *ngIf="errorValidationBackend?.lastname" class="text-danger mt-1">
+                <div *ngIf="errorValidationBackend?.lastname" class="text-danger mt-1 small">
                   {{ errorValidationBackend.lastname }}
                 </div>
               </div>
             </div>
 
-            <!-- Segunda fila: DNI y Teléfono -->
+            <!-- Segunda fila: DNI y Telfono -->
             <div class="row mb-3">
               <div class="col-md-6 mb-3 mb-md-0">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <label class="form-label mb-0" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">DNI (*)</label>
-                  <small class="text-muted" style="font-size: 0.75rem;">(O use el botón superior para autocompletar)</small>
-                </div>
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                  DNI <span class="text-danger">*</span> (8 dgitos)
+                </label>
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <span class="input-group-text"
@@ -117,16 +115,18 @@
                     [ngClass]="{'is-invalid': hasError('dni')}"
                     style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-weight: 600; letter-spacing: 1px;">
                 </div>
-                <div *ngIf="hasError('dni')" class="text-danger mt-1">
+                <div *ngIf="hasError('dni')" class="text-danger mt-1 small">
                   {{ getFieldErrorMessage('dni') }}
                 </div>
-                <div *ngIf="errorValidationBackend?.dni" class="text-danger mt-1">
+                <div *ngIf="errorValidationBackend?.dni" class="text-danger mt-1 small">
                   {{ errorValidationBackend.dni }}
                 </div>
               </div>
 
               <div class="col-md-6">
-                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">Teléfono <span class="small font-weight-normal text-muted">(Opcional)</span></label>
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                  Telfono / Celular <span class="small font-weight-normal text-muted">(Opcional)</span>
+                </label>
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <span class="input-group-text"
@@ -134,57 +134,25 @@
                       <i class="fas fa-phone"></i>
                     </span>
                   </div>
-                  <input type="text" class="form-control" formControlName="phone"
-                    placeholder="Ej: 987654321 (opcional)" [ngClass]="{'is-invalid': hasError('phone')}"
+                  <input type="text" maxlength="9" class="form-control" formControlName="phone"
+                    placeholder="Ej: 987654321" [ngClass]="{'is-invalid': hasError('phone')}"
                     style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-weight: 500;">
                 </div>
-                <div *ngIf="hasError('phone')" class="text-danger mt-1">
+                <div *ngIf="hasError('phone')" class="text-danger mt-1 small">
                   {{ getFieldErrorMessage('phone') }}
                 </div>
-                <div *ngIf="errorValidationBackend?.phone" class="text-danger mt-1">
+                <div *ngIf="errorValidationBackend?.phone" class="text-danger mt-1 small">
                   {{ errorValidationBackend.phone }}
                 </div>
               </div>
             </div>
 
-            <!-- Información SUNAT (Si se verificó el DNI) -->
-            <div *ngIf="infoSunat" class="row mb-3">
-              <div class="col-12">
-                <div class="p-3 rounded" style="background: #FFFFFF; border: 1.5px solid #BBF7D0; border-left: 5px solid #166534; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.08);">
-                  <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #E2E8F0 !important;">
-                    <span class="font-weight-bold" style="color: #166534; font-size: 0.92rem;">
-                      <i class="fas fa-shield-alt mr-2" style="color: #166534;"></i> Consulta Oficial SUNAT (RUC 10)
-                    </span>
-                    <span class="badge py-1 px-2 font-weight-bold"
-                      [style.background]="infoSunat.condicion === 'HABIDO' ? '#DCFCE7' : '#FEF3C7'"
-                      [style.color]="infoSunat.condicion === 'HABIDO' ? '#166534' : '#92400E'"
-                      style="border-radius: 6px; font-size: 0.8rem;">
-                      <i class="fas" [ngClass]="infoSunat.condicion === 'HABIDO' ? 'fa-check-circle mr-1' : 'fa-info-circle mr-1'"></i>
-                      {{ infoSunat.condicion }}
-                    </span>
-                  </div>
-                  <div class="row g-2" style="font-size: 0.85rem; color: #2C1810;">
-                    <div class="col-sm-4">
-                      <span class="text-muted d-block" style="font-size: 0.75rem;">RUC 10 Oficial:</span>
-                      <strong class="font-weight-bold" style="color: #180B06; letter-spacing: 0.5px;">{{ infoSunat.rucReferencial }}</strong>
-                    </div>
-                    <div class="col-sm-4">
-                      <span class="text-muted d-block" style="font-size: 0.75rem;">Estado Tributario:</span>
-                      <strong class="font-weight-bold text-success">{{ infoSunat.estadoTributario }}</strong>
-                    </div>
-                    <div class="col-sm-4">
-                      <span class="text-muted d-block" style="font-size: 0.75rem;">Deuda Coactiva:</span>
-                      <strong class="font-weight-bold text-success">S/. {{ infoSunat.deudaCoactiva | number:'1.2-2' }} (Sin deuda)</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tercera fila: Dirección -->
+            <!-- Tercera fila: Direccin y Sueldo Mensual Aprox. -->
             <div class="row mb-3">
-              <div class="col-12">
-                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">Dirección <span class="small font-weight-normal text-muted">(Opcional)</span></label>
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                  Direccin <span class="small font-weight-normal text-muted">(Opcional)</span>
+                </label>
                 <div class="input-group">
                   <div class="input-group-prepend">
                     <span class="input-group-text"
@@ -192,103 +160,71 @@
                       <i class="fas fa-map-marker-alt"></i>
                     </span>
                   </div>
-                  <input type="text" class="form-control" formControlName="address" placeholder="Ingrese su dirección"
+                  <input type="text" class="form-control" formControlName="address" placeholder="Ej: Av. Principal 123"
                     [ngClass]="{'is-invalid': hasError('address')}"
                     style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-weight: 500;">
                 </div>
-                <div *ngIf="hasError('address')" class="text-danger mt-1">
+                <div *ngIf="hasError('address')" class="text-danger mt-1 small">
                   {{ getFieldErrorMessage('address') }}
                 </div>
-                <div *ngIf="errorValidationBackend?.address" class="text-danger mt-1">
+                <div *ngIf="errorValidationBackend?.address" class="text-danger mt-1 small">
                   {{ errorValidationBackend.address }}
                 </div>
               </div>
-            </div>
 
-            <!-- SECCIÓN: EVALUACIÓN DE RIESGO Y LÍMITE DE CRÉDITO CON IA -->
-            <div class="row mb-3 mt-4">
-              <div class="col-12">
-                <div class="card border-0" style="background: #FAF7F2; border-radius: 12px; border: 1px solid #E5DDD3; overflow: hidden;">
-                  <div class="card-header d-flex justify-content-between align-items-center py-2 px-3"
-                    style="background: var(--cr-header-gradient); border-bottom: 2px solid var(--cr-gold);">
-                    <span class="font-weight-bold" style="font-size: 1.05rem; color: #FFFFFF !important; letter-spacing: 0.3px;">
-                      <i class="fas fa-brain mr-2" style="color: #FAD082;"></i> Evaluación Crediticia y Límite con IA
+              <!-- CAMPO DESTACADO: SUELDO MENSUAL APROXIMADO -->
+              <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label mb-0" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">
+                    Sueldo Mensual Aprox.
+                  </label>
+                  <span class="badge" style="background: #FEF7EA; color: #8C5D30; border: 1px solid #FAD082; font-size: 0.72rem;">Opcional</span>
+                </div>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text font-weight-bold"
+                      style="background: #FAF7F2; border: 1.5px solid #C59B6D; border-right: none; color: #166534;">
+                      S/.
                     </span>
-                    <button type="button" class="btn btn-sm font-weight-bold"
-                      (click)="evaluarConIa()" [disabled]="evaluandoIa"
-                      style="background: #C59B6D; color: #180B06; border: 1px solid #FAD082; border-radius: 6px; padding: 4px 12px; font-size: 0.82rem;">
-                      <i class="fas fa-calculator mr-1"></i>
-                      {{ evaluandoIa ? 'Analizando...' : 'Calcular Límite con IA' }}
-                    </button>
                   </div>
-
-                  <div class="card-body p-3">
-                    <div class="row align-items-center">
-                      <div class="col-md-5 mb-2 mb-md-0">
-                        <label class="form-label small font-weight-bold text-muted mb-1">Ingreso Mensual Declarado (S/.):</label>
-                        <input type="number" class="form-control form-control-sm" [(ngModel)]="ingresoDeclarado" [ngModelOptions]="{standalone: true}"
-                          placeholder="Ej: 1500" style="border: 1px solid #C59B6D; color: #2C1810; font-weight: bold;">
-                        <small class="text-muted" style="font-size: 0.72rem;">Dato referencial del cliente para el cálculo del scoring</small>
-                      </div>
-
-                      <div class="col-md-7">
-                        <div *ngIf="!evaluacionIa" class="p-2 text-center rounded" style="background: #FFFFFF; border: 1px dashed #C59B6D;">
-                          <small class="text-muted">
-                            <i class="fas fa-info-circle mr-1 text-warning"></i>
-                            Presione <strong>"Calcular Límite con IA"</strong> para estimar el score y el límite seguro de fiado.
-                          </small>
-                        </div>
-
-                        <!-- Tarjeta con resultado de la IA -->
-                        <div *ngIf="evaluacionIa" class="p-3 rounded" style="background: #FFFFFF; border: 1px solid #BBF7D0; border-left: 4px solid #166534;">
-                          <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div>
-                              <strong style="color: #166534; font-size: 0.95rem;">
-                                <i class="fas fa-check-circle mr-1"></i> {{ evaluacionIa.recomendacion }}
-                              </strong>
-                              <span class="badge ml-2"
-                                [ngClass]="evaluacionIa.nivel_riesgo === 'Bajo' ? 'badge-success' : (evaluacionIa.nivel_riesgo === 'Medio' ? 'badge-warning' : 'badge-danger')">
-                                Riesgo {{ evaluacionIa.nivel_riesgo }}
-                              </span>
-                            </div>
-                            <div class="text-right">
-                              <span class="small text-muted d-block" style="font-size: 0.72rem;">Score IA</span>
-                              <strong style="color: #2C1810; font-size: 1.1rem;">{{ evaluacionIa.score_crediticio }}/100</strong>
-                            </div>
-                          </div>
-
-                          <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top" style="border-color: #EFE8DF !important;">
-                            <span class="small" style="color: #66564E;">Límite de Fiado Sugerido:</span>
-                            <span class="font-weight-bold" style="color: #166534; font-family: 'Lora', serif; font-size: 1.25rem;">
-                              S/. {{ evaluacionIa.limite_sugerido | number:'1.2-2' }}
-                            </span>
-                          </div>
-                          <p class="mb-0 mt-2 small text-muted" style="font-size: 0.75rem;">{{ evaluacionIa.motivo_analisis }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <input type="number" step="50" min="0" class="form-control font-weight-bold" formControlName="ingresoMensual"
+                    placeholder="Ej: 1500.00"
+                    [ngClass]="{'is-invalid': hasError('ingresoMensual')}"
+                    style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; font-size: 0.95rem;">
+                </div>
+                <small class="form-text text-muted mt-1" style="font-size: 0.76rem;">
+                  <i class="fas fa-info-circle mr-1" style="color: #C59B6D;"></i>
+                  Permite a la IA calcular automticamente su capacidad de pago y lmite de fiado.
+                </small>
+                <div *ngIf="hasError('ingresoMensual')" class="text-danger mt-1 small">
+                  {{ getFieldErrorMessage('ingresoMensual') }}
                 </div>
               </div>
             </div>
 
-            @if (isEditMode) {
-              <div class="col-md-12 mb-3">
-                <div class="form-group">
-                  <label style="color: rgba(255,255,255,0.7);">Email</label>
-                  <input type="email" class="form-control" formControlName="email"
-                    style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border-radius: 0.5rem;">
-                  <small class="form-text" style="color: rgba(255,255,255,0.5);">El email no puede ser
-                    modificado.</small>
-                </div>
+            <!-- Fila de edicin para Email y Contrasea si aplica -->
+            <div *ngIf="isEditMode" class="row mb-3">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label text-muted" style="font-size: 0.88rem; font-weight: 600;">Correo Electrnico</label>
+                <input type="email" class="form-control" formControlName="email"
+                  style="background: #EFE8DF; border: 1px solid #D5CCC0; color: #66564E; border-radius: 6px;">
+                <small class="form-text text-muted" style="font-size: 0.74rem;">El correo no puede ser modificado.</small>
               </div>
-            }
 
-            <!-- Botones de acción -->
-            <div class="row mt-4">
+              <div class="col-md-6">
+                <label class="form-label" style="color: #2C1810; font-weight: 600; font-size: 0.88rem;">Nueva Contrasea</label>
+                <input type="password" class="form-control" formControlName="password"
+                  placeholder="Dejar en blanco para mantener la actual"
+                  style="background: #FFFFFF; border: 1.5px solid #C59B6D; color: #180B06 !important; border-radius: 6px;">
+                <small class="form-text text-muted" style="font-size: 0.74rem;">Solo completar si desea cambiar la contrasea.</small>
+              </div>
+            </div>
+
+            <!-- Botones de accin -->
+            <div class="row mt-4 pt-3 border-top" style="border-color: #E5DDD3 !important;">
               <div class="col-6">
-                <button type="button" class="btn btn-block font-weight-bold" routerLink="/users"
-                  style="background: #E74C3C; color: #FFFFFF !important; border: 1px solid #C0392B; border-radius: 0.5rem; padding: 11px 0; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.35); transition: all 0.3s ease;">
+                <button type="button" routerLink="/users" class="btn btn-block font-weight-bold"
+                  style="background: #EFE8DF; color: #66564E; border: 1px solid #D5CCC0; border-radius: 0.5rem; padding: 11px 0;">
                   <i class="fas fa-times mr-2"></i> Cancelar
                 </button>
               </div>
@@ -296,10 +232,11 @@
                 <button type="submit" class="btn btn-block font-weight-bold" [disabled]="userForm.invalid || loading"
                   style="background: linear-gradient(135deg, #27AE60 0%, #219653 100%); color: white; border: none; border-radius: 0.5rem; padding: 11px 0; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.35); transition: all 0.3s ease;">
                   <i class="fas" [ngClass]="isEditMode ? 'fa-save' : 'fa-user-plus'" class="mr-2"></i>
-                  {{ isEditMode ? 'Guardar Cambios' : 'Registrar Usuario' }}
+                  {{ isEditMode ? 'Guardar Cambios' : 'Registrar Cliente' }}
                 </button>
               </div>
             </div>
+
           </form>
         </div>
       </div>
@@ -307,182 +244,7 @@
   </div>
 </div>
 
-<!-- MODAL DE CONSULTA DE DNI (RENIEC / APIPERU) -->
-<div *ngIf="modalConsultaVisible" class="modal-backdrop-custom" (click)="cerrarModalConsulta()">
-  <div class="modal-dialog-custom" (click)="$event.stopPropagation()">
-    <div class="modal-content-custom">
-      <!-- Modal Header -->
-      <div class="modal-header-custom d-flex justify-content-between align-items-center">
-        <h5 class="modal-title m-0 text-white font-weight-bold" style="font-size: 1.05rem;">
-          <i class="fas fa-id-card mr-2" style="color: #FAD082;"></i> Consulta Oficial RENIEC & SUNAT
-        </h5>
-        <button type="button" class="btn-close-custom" (click)="cerrarModalConsulta()" title="Cerrar ventana">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body-custom p-4">
-        <p style="color: #66564E; font-size: 0.88rem; line-height: 1.45;" class="mb-3">
-          Ingrese el número de <strong>DNI (8 dígitos)</strong> para consultar la identidad oficial en el registro nacional (RENIEC) y verificar automáticamente su estado tributario en SUNAT.
-        </p>
-
-        <div class="form-group mb-3">
-          <label class="form-label font-weight-bold" style="color: #2C1810; font-size: 0.85rem;">
-            Número de DNI:
-          </label>
-          <div class="input-group">
-            <div class="input-group-prepend">
-              <span class="input-group-text" style="background: #FAF7F2; border: 1px solid #C59B6D; border-right: none; color: #2C1810;">
-                <i class="fas fa-search"></i>
-              </span>
-            </div>
-            <input type="text" maxlength="8" class="form-control"
-              [(ngModel)]="dniBusqueda" (keyup.enter)="ejecutarConsultaDni()"
-              placeholder="Ej: 12345678"
-              style="border: 1.5px solid #C59B6D; font-size: 1.15rem; font-weight: bold; letter-spacing: 2px; color: #180B06 !important; background: #FFFFFF;">
-          </div>
-        </div>
-
-        <div class="p-2 rounded mb-2" style="background: #F4F8F5; border: 1px solid #D1E7DD; font-size: 0.78rem; color: #146C43;">
-          <i class="fas fa-shield-alt mr-1"></i>
-          <strong>Protección de cuota:</strong> Las consultas exitosas se almacenan en caché local. No consumirán tokens si el DNI ya fue consultado.
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer-custom d-flex justify-content-end p-3" style="border-top: 1px solid #EFE8DF; background: #FAF7F2; border-radius: 0 0 16px 16px;">
-        <button type="button" class="btn btn-sm btn-cancelar-custom mr-2 font-weight-bold" (click)="cerrarModalConsulta()">
-          <i class="fas fa-times-circle mr-1"></i> Cancelar
-        </button>
-        <button type="button" class="btn btn-sm font-weight-bold" (click)="ejecutarConsultaDni()" [disabled]="consultandoApi"
-          style="background: linear-gradient(135deg, #C59B6D 0%, #B38654 100%); color: #180B06; border: 1px solid #FAD082; border-radius: 8px; padding: 8px 20px;">
-          <i *ngIf="consultandoApi" class="fas fa-spinner fa-spin mr-1"></i>
-          <i *ngIf="!consultandoApi" class="fas fa-check mr-1"></i>
-          {{ consultandoApi ? 'Consultando...' : 'Consultar y Autocompletar' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <style>
-  /* Backdrop y modal personalizado */
-  .modal-backdrop-custom {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(24, 11, 6, 0.75);
-    backdrop-filter: blur(4px);
-    z-index: 1050;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.2s ease-out;
-  }
-
-  .modal-dialog-custom {
-    width: 100%;
-    max-width: 480px;
-    margin: 1rem;
-  }
-
-  .modal-content-custom {
-    background: #FFFFFF;
-    border-radius: 16px;
-    border: 1px solid #E5DDD3;
-    box-shadow: 0 20px 40px rgba(44, 24, 16, 0.35);
-    overflow: hidden;
-  }
-
-  .modal-header-custom {
-    background: linear-gradient(135deg, #2C1810 0%, #361E14 100%);
-    padding: 14px 20px;
-    border-bottom: 2px solid #C59B6D;
-  }
-
-  /* Botón X llamativo y visible para cerrar modal */
-  .btn-close-custom {
-    background: #E74C3C;
-    color: #FFFFFF !important;
-    border: 1px solid #C0392B;
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.4);
-    transition: all 0.2s ease-in-out;
-  }
-
-  .btn-close-custom:hover {
-    background: #C0392B;
-    transform: scale(1.08);
-  }
-
-  /* Botón Cancelar con color rojo llamativo */
-  .btn-cancelar-custom {
-    background: #E74C3C;
-    color: #FFFFFF !important;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 18px;
-    box-shadow: 0 3px 8px rgba(231, 76, 60, 0.35);
-    transition: all 0.2s ease-in-out;
-  }
-
-  .btn-cancelar-custom:hover {
-    background: #C0392B;
-    transform: translateY(-1px);
-    box-shadow: 0 5px 12px rgba(231, 76, 60, 0.45);
-    color: #FFFFFF !important;
-  }
-
-  /* Botón dinámico en la esquina superior derecha del card */
-  .btn-consultar-dni-top {
-    background: linear-gradient(135deg, #FAD082 0%, #C59B6D 50%, #B38654 100%);
-    color: #180B06 !important;
-    font-weight: 700;
-    font-size: 0.84rem;
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid #FFE2A8;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-  }
-
-  .btn-consultar-dni-top:hover {
-    background: linear-gradient(135deg, #FFE8B8 0%, #FAD082 100%);
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 6px 16px rgba(250, 208, 130, 0.45);
-    color: #000 !important;
-  }
-
-  .btn-consultar-dni-top:active {
-    transform: translateY(0) scale(0.98);
-  }
-
-  /* Animaciones para formulario */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   /* Inputs legibles con texto oscuro de alto contraste */
   .form-control {
     color: #180B06 !important;
@@ -494,7 +256,6 @@
     opacity: 0.85;
   }
 
-  /* Estilos para inputs con foco */
   .form-control:focus {
     background: #FFFFFF !important;
     box-shadow: 0 0 0 0.2rem rgba(197, 155, 109, 0.25) !important;
@@ -502,13 +263,6 @@
     color: #180B06 !important;
   }
 
-  /* Estilos para inputs disabled */
-  .form-control:disabled {
-    background: #EFE8DF !important;
-    color: #66564E !important;
-  }
-
-  /* Estilos para botones */
   .btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -519,4 +273,3 @@
     cursor: not-allowed;
   }
 </style>
-

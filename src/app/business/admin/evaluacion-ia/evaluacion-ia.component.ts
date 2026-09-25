@@ -47,7 +47,7 @@ export class EvaluacionIaComponent implements OnInit {
   metricasModelo: MetricasModeloIA | null = null;
 
   clienteSeleccionado: ClienteEvaluado | null = null;
-  modalDetalleVisible: boolean = false;
+  mostrarDetalleXai: boolean = true;
   montoSimulacion: number = 200;
   resultadoSimulacion: string | null = null;
   tipoResultadoSimulacion: 'aprobado' | 'denegado' | 'advertencia' = 'aprobado';
@@ -559,26 +559,32 @@ export class EvaluacionIaComponent implements OnInit {
     }
   }
 
-  seleccionarCliente(cliente: ClienteEvaluado): void {
+  seleccionarCliente(cliente: ClienteEvaluado, hacerScroll: boolean = false): void {
     this.clienteSeleccionado = cliente;
     this.resultadoSimulacion = null;
     this.montoSimulacion = cliente.limite_sugerido > 0 ? Math.min(200, cliente.limite_sugerido) : 150;
-    this.modalDetalleVisible = true;
-  }
+    this.mostrarDetalleXai = true;
 
-  abrirModalDetalle(cliente: ClienteEvaluado): void {
-    this.seleccionarCliente(cliente);
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscapePressed(): void {
-    if (this.modalDetalleVisible) {
-      this.cerrarModalDetalle();
+    if (hacerScroll) {
+      setTimeout(() => {
+        const el = document.getElementById('panel-diagnostico-xai');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 60);
     }
   }
 
-  cerrarModalDetalle(): void {
-    this.modalDetalleVisible = false;
+  abrirDetalleCliente(cliente: ClienteEvaluado): void {
+    this.seleccionarCliente(cliente, true);
+  }
+
+  cerrarDetalleXai(): void {
+    this.mostrarDetalleXai = false;
+  }
+
+  toggleDetalleXai(): void {
+    this.mostrarDetalleXai = !this.mostrarDetalleXai;
   }
 
   simularCredito(): void {
@@ -606,4 +612,6 @@ export class EvaluacionIaComponent implements OnInit {
     return (nombre || 'CR').substring(0, 2).toUpperCase();
   }
 }
+
+
 
