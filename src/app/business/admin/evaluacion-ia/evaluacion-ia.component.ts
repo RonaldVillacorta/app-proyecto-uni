@@ -264,7 +264,7 @@ export class EvaluacionIaComponent implements OnInit {
           const deuda = feat ? feat.monto_deuda_actual : 0;
           const compras = feat ? feat.total_compras_historico : 0;
           const antiguedad = feat ? feat.antiguedad_meses : 12;
-          const capacidad = Math.max(0, (ingreso * 0.22) - (deuda * 0.35));
+          const capacidad = Math.max(0, (ingreso * 0.25) - (deuda * 0.35));
           const cuotas = feat ? feat.cuotas_vencidas : 0;
           const dias = feat ? feat.dias_retraso_promedio : 0;
 
@@ -293,7 +293,7 @@ export class EvaluacionIaComponent implements OnInit {
         const fallback: ClienteEvaluado[] = features.map((f: ClienteFeatures) => {
           const raw = rawMap.get(f.id || 0) || {};
           const scoring = this.calcularScoreContinuo(f, raw);
-          const capacidad = Math.max(0, (f.ingreso_mensual * 0.22) - (f.monto_deuda_actual * 0.35));
+          const capacidad = Math.max(0, (f.ingreso_mensual * 0.25) - (f.monto_deuda_actual * 0.35));
           const item: ClienteEvaluado = {
             id: f.id,
             nombre: f.nombre,
@@ -612,6 +612,7 @@ export class EvaluacionIaComponent implements OnInit {
     return (nombre || 'CR').substring(0, 2).toUpperCase();
   }
 }
+
 
 
 
