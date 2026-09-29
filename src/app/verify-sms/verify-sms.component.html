@@ -10,18 +10,18 @@
           <i class="fas fa-shield-alt"></i>
         </div>
         <h1 class="brand-title">Comercial Reyes</h1>
-        <p class="brand-subtitle">VERIFICACIÓN DE SEGURIDAD (2FA)</p>
+        <p class="brand-subtitle">DOBLE FACTOR DE AUTENTICACIÓN (2FA)</p>
       </div>
 
       <!-- Cuerpo del Componente -->
       <div class="verify-body">
         <div class="verify-intro">
           <div class="device-icon-bubble">
-            <i class="fas fa-mobile-alt"></i>
+            <i class="fas fa-mobile-screen-button"></i>
           </div>
-          <h2 class="verify-title">Verifica tu Identidad</h2>
+          <h2 class="verify-title">Google Authenticator</h2>
           <p class="verify-desc">
-            Hemos enviado un código seguro de 6 dígitos a tu teléfono registrado
+            Escanea el código QR con tu aplicación autenticadora e ingresa los 6 dígitos
           </p>
           <div class="user-chip">
             <i class="far fa-user me-1 text-gold"></i>
@@ -29,43 +29,53 @@
           </div>
         </div>
 
-        <!-- Botón WhatsApp con countdown -->
-        <div class="mt-3 mb-2" *ngIf="!showWhatsAppButton && !whatsappSent">
-          <div class="channel-notice">
-            <i class="fas fa-clock text-gold me-2"></i>
-            <span>¿No llegó el SMS? WhatsApp disponible en <strong>{{ countdown }}s</strong></span>
+        <!-- ================= PANEL GOOGLE AUTHENTICATOR (RFC 6238 TOTP) ================= -->
+        <div class="totp-panel mt-3">
+          <div class="totp-badge-header">
+            <i class="fas fa-shield-alt text-gold me-1"></i>
+            <span>Estándar Internacional TOTP (100% Offline y Gratuito)</span>
+          </div>
+
+          <!-- Código QR para Escaneo Directo con el Teléfono -->
+          <div class="totp-qr-wrapper">
+            <div class="qr-frame">
+              <img
+                *ngIf="qrCodeUrl"
+                [src]="qrCodeUrl"
+                alt="QR Google Authenticator"
+                class="totp-qr-img"
+              />
+              <div *ngIf="!qrCodeUrl" class="totp-placeholder">
+                <i class="fas fa-qrcode fa-3x text-muted"></i>
+              </div>
+            </div>
+            <p class="qr-guide-text">
+              Escanea este QR con <strong>Google Authenticator</strong> o <strong>Microsoft Authenticator</strong>
+            </p>
+          </div>
+
+          <!-- Clave Secreta Manual -->
+          <div class="totp-manual-box" *ngIf="totpSecret">
+            <div class="totp-manual-title">
+              <i class="fas fa-key me-1 text-gold"></i>
+              <span>Clave secreta de respaldo manual:</span>
+            </div>
+            <div class="totp-key-row">
+              <code class="totp-key-code">{{ totpSecret }}</code>
+              <button
+                type="button"
+                class="btn-copy-totp"
+                (click)="copySecret()"
+                title="Copiar clave"
+              >
+                <i class="fas" [ngClass]="copiedSecret ? 'fa-check text-success' : 'fa-copy'"></i>
+                <span>{{ copiedSecret ? '¡Copiado!' : 'Copiar' }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Botón WhatsApp cuando finaliza countdown -->
-        <div class="mt-3 mb-3" *ngIf="showWhatsAppButton && !whatsappSent">
-          <div class="channel-notice mb-2">
-            <i class="fab fa-whatsapp text-success me-2"></i>
-            <span>¿Problemas con el SMS tradicional? Prueba recibirlo por WhatsApp:</span>
-          </div>
-          <button
-            type="button"
-            class="btn btn-whatsapp w-100"
-            (click)="onSendWhatsApp()"
-            [disabled]="whatsappSending"
-          >
-            <i class="fab fa-whatsapp me-2"></i>
-            <span *ngIf="!whatsappSending">Enviar Código por WhatsApp</span>
-            <span *ngIf="whatsappSending">
-              <span class="spinner-border spinner-border-sm me-2"></span>
-              Enviando mensaje...
-            </span>
-          </button>
-        </div>
-
-        <!-- Confirmación WhatsApp enviado -->
-        <div class="mt-3 mb-3" *ngIf="whatsappSent">
-          <div class="channel-success">
-            <i class="fab fa-whatsapp me-2"></i>
-            <span>¡Código reenviado por WhatsApp! Revisa tu bandeja de mensajes.</span>
-          </div>
-        </div>
-
+        <!-- ================= FORMULARIO DE INGRESO DEL CÓDIGO ================= -->
         <form (ngSubmit)="onVerifySms()" class="mt-3">
           @if (errorMessage) {
           <div class="verify-alert-error" role="alert">
@@ -76,7 +86,7 @@
 
           <div class="form-group mb-3 text-center">
             <label for="smsCode" class="form-label mb-2">
-              Ingresa el Código de 6 Dígitos
+              Ingresa el Código de Google Authenticator
             </label>
             <div class="code-input-wrapper">
               <input
@@ -93,7 +103,7 @@
               />
             </div>
             <small class="code-hint">
-              Recibido vía SMS o WhatsApp de Comercial Reyes
+              Código de 6 dígitos que cambia cada 30 segundos en tu aplicación móvil
             </small>
           </div>
 
@@ -105,7 +115,7 @@
             >
               @if (isLoading) {
                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <span>Verificando Código...</span>
+                <span>Verificando Identidad...</span>
               } @else {
                 <i class="fas fa-check-circle me-2"></i>
                 <span>Verificar y Acceder</span>
@@ -126,7 +136,7 @@
 
         <div class="verify-footer-hint">
           <i class="fas fa-history text-gold me-1"></i>
-          <span>El código expira en 5 minutos por razones de seguridad.</span>
+          <span>El código TOTP se actualiza automáticamente cada 30 segundos (100% offline y seguro).</span>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -149,12 +149,11 @@ export class EvaluacionIaComponent implements OnInit {
           const tieneIngreso = !!(c.ingresoMensual && Number(c.ingresoMensual) > 0);
           const seedIngreso = tieneIngreso ? Number(c.ingresoMensual) : (1025 + ((c.id * 317) % 2500));
           c.ingresoDeclarado = tieneIngreso;
-          const antiguedad = 6 + ((c.id * 7) % 36);
 
           this.creditoService.obtenerCreditosPorCliente(c.id).subscribe({
             next: (creditos: any[]) => {
               if (!creditos || creditos.length === 0) {
-                // Clientes nuevos o sin credito previo en la bodega
+                // Clientes nuevos o sin crédito previo en la bodega
                 const comprasHistoricas = 0.0;
                 featuresList.push({
                   id: c.id,
@@ -163,7 +162,7 @@ export class EvaluacionIaComponent implements OnInit {
                   monto_deuda_actual: 0.0,
                   dias_retraso_promedio: 0.0,
                   cuotas_vencidas: 0,
-                  antiguedad_meses: antiguedad,
+                  antiguedad_meses: 0,
                   total_compras_historico: comprasHistoricas
                 });
                 procesados++;
@@ -179,6 +178,24 @@ export class EvaluacionIaComponent implements OnInit {
               const hoy = new Date();
               hoy.setHours(0, 0, 0, 0);
               let creditosProcesados = 0;
+
+              // Calcular antigüedad real según el primer crédito otorgado
+              let fechaMasAntigua: Date | null = null;
+              (creditos || []).forEach((cr: any) => {
+                if (cr.fechaInicio) {
+                  const f = new Date(cr.fechaInicio);
+                  if (!isNaN(f.getTime())) {
+                    if (!fechaMasAntigua || f.getTime() < fechaMasAntigua.getTime()) {
+                      fechaMasAntigua = f;
+                    }
+                  }
+                }
+              });
+              let antiguedadReal = 0;
+              if (fechaMasAntigua) {
+                const diffDays = Math.max(0, Math.floor((hoy.getTime() - (fechaMasAntigua as Date).getTime()) / (1000 * 60 * 60 * 24)));
+                antiguedadReal = Math.floor(diffDays / 30);
+              }
 
               creditos.forEach((cred: any) => {
                 this.creditoService.obtenerCuotasPorCredito(cred.id).subscribe({
@@ -216,7 +233,7 @@ export class EvaluacionIaComponent implements OnInit {
                         monto_deuda_actual: montoDeuda,
                         dias_retraso_promedio: diasRetrasoMax,
                         cuotas_vencidas: cuotasVencidas,
-                        antiguedad_meses: antiguedad,
+                        antiguedad_meses: antiguedadReal,
                         total_compras_historico: comprasHistoricas
                       });
                       procesados++;
@@ -263,7 +280,7 @@ export class EvaluacionIaComponent implements OnInit {
           const ingreso = feat ? feat.ingreso_mensual : 2000;
           const deuda = feat ? feat.monto_deuda_actual : 0;
           const compras = feat ? feat.total_compras_historico : 0;
-          const antiguedad = feat ? feat.antiguedad_meses : 12;
+          const antiguedad = (feat && feat.antiguedad_meses !== undefined) ? feat.antiguedad_meses : 0;
           const capacidad = Math.max(0, (ingreso * 0.25) - (deuda * 0.35));
           const cuotas = feat ? feat.cuotas_vencidas : 0;
           const dias = feat ? feat.dias_retraso_promedio : 0;
@@ -466,7 +483,7 @@ export class EvaluacionIaComponent implements OnInit {
       // Garantizar que la animaci?n se disfrute entre 3.8 a 4.2 segundos
       setTimeout(() => {
         this.porcentajeProgreso = 100;
-        this.mensajeAnalisis = 'Analisis predictivo finalizado con exito!';
+        this.mensajeAnalisis = '¡Análisis predictivo finalizado con éxito!';
 
         setTimeout(() => {
           this.finalizarAnalisis(resultadoFinal);
@@ -594,13 +611,13 @@ export class EvaluacionIaComponent implements OnInit {
 
     if (c.nivel_riesgo === 'Alto' || c.limite_sugerido === 0) {
       this.tipoResultadoSimulacion = 'denegado';
-      this.resultadoSimulacion = 'DENEGADO: El cliente presenta un Score critico de ' + c.score_crediticio + ' pts con cuotas impagas (' + c.diasRetrasoPromedio + ' dias de atraso). Fiar S/. ' + monto.toFixed(2) + ' incrementa el riesgo de impago irreversible.';
+      this.resultadoSimulacion = 'DENEGADO: El cliente presenta un Score crítico de ' + c.score_crediticio + ' pts con cuotas impagas (' + c.diasRetrasoPromedio + ' días de atraso). Fiar S/. ' + monto.toFixed(2) + ' incrementa el riesgo de impago irreversible.';
     } else if (monto <= c.limite_sugerido) {
       this.tipoResultadoSimulacion = 'aprobado';
-      this.resultadoSimulacion = 'APROBADO: El monto de S/. ' + monto.toFixed(2) + ' esta dentro del limite prudente sugerido por la IA (S/. ' + c.limite_sugerido.toFixed(2) + '). Riesgo crediticio bajo y controlado.';
+      this.resultadoSimulacion = 'APROBADO: El monto de S/. ' + monto.toFixed(2) + ' está dentro del límite prudente sugerido por la IA (S/. ' + c.limite_sugerido.toFixed(2) + '). Riesgo crediticio bajo y controlado.';
     } else {
       this.tipoResultadoSimulacion = 'advertencia';
-      this.resultadoSimulacion = 'ADVERTENCIA: S/. ' + monto.toFixed(2) + ' excede el limite maximo recomendado por la IA (S/. ' + c.limite_sugerido.toFixed(2) + '). Se recomienda reducir el monto a otorgar.';
+      this.resultadoSimulacion = 'ADVERTENCIA: S/. ' + monto.toFixed(2) + ' excede el límite máximo recomendado por la IA (S/. ' + c.limite_sugerido.toFixed(2) + '). Se recomienda reducir el monto a otorgar.';
     }
   }
 

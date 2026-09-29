@@ -1094,7 +1094,8 @@ export class AdminUsuarioDetalleComponent implements OnInit {
     this.sbsAnalyzing = true;
     this.sbsUploadError = '';
 
-    this.userService.subirReporteSbs(this.selectedSbsFile).subscribe({
+    const targetUserId = this.user ? this.user.id : undefined;
+    this.userService.subirReporteSbs(this.selectedSbsFile, targetUserId).subscribe({
       next: (resultado) => {
         this.sbsAnalyzing = false;
         this.sbsAnalysisResult = resultado;

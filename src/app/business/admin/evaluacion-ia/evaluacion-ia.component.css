@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    EVALUACIÓN IA - COMERCIAL REYES (ESPRESSO & CREMA NOBLE)
    ========================================================================== */
 
@@ -198,11 +198,20 @@
 }
 
 /* ==========================================================================
-   PANEL INLINE XAI - DIAGNSTICO FINANCIERO
+   PANEL INLINE XAI - DIAGNÓSTICO FINANCIERO
    ========================================================================== */
 .table-selected-ai {
   background-color: #FEF7EA !important;
   border-left: 4px solid #C59B6D !important;
+}
+
+.xai-client-name {
+  color: #FFFFFF !important;
+  font-family: 'Lora', serif !important;
+  font-weight: 700 !important;
+  font-size: 1.25rem;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .avatar-circle-lg {

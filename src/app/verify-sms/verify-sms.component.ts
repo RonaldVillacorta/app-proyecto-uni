@@ -19,11 +19,11 @@ export class VerifySmsComponent implements OnInit {
   errorMessage: boolean = false;
   isLoading: boolean = false;
 
-  // Nuevas propiedades para WhatsApp
-  showWhatsAppButton: boolean = false;
-  whatsappSending: boolean = false;
-  whatsappSent: boolean = false;
-  countdown: number = 5;
+  // Propiedades para Google Authenticator (TOTP RFC 6238)
+  totpSecret: string = '';
+  totpUri: string = '';
+  qrCodeUrl: string = '';
+  copiedSecret: boolean = false;
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -40,51 +40,19 @@ export class VerifySmsComponent implements OnInit {
     this.isAdmin = pendingAuth.isAdmin;
     this.tempToken = pendingAuth.tempToken;
 
-    // Iniciar countdown para mostrar botón WhatsApp después de 5 segundos
-    this.startWhatsAppCountdown();
+    // Cargar credenciales TOTP de Google Authenticator
+    this.totpSecret = pendingAuth.totpSecret || '';
+    this.totpUri = pendingAuth.totpUri || '';
+    this.qrCodeUrl = pendingAuth.qrCodeUrl || (this.totpUri ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(this.totpUri)}` : '');
   }
 
-  startWhatsAppCountdown() {
-    const timer = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        this.showWhatsAppButton = true;
-        clearInterval(timer);
-      }
-    }, 1000);
-  }
-
-  onSendWhatsApp() {
-    this.whatsappSending = true;
-
-    const whatsappData = {
-      email: this.email,
-    };
-
-    this.authService.sendWhatsApp(whatsappData).subscribe({
-      next: (response) => {
-        this.whatsappSending = false;
-        this.whatsappSent = true;
-
-        Swal.fire({
-          title: 'WhatsApp Enviado',
-          text: 'Revisa tu WhatsApp para obtener el código de verificación',
-          icon: 'success',
-          timer: 3000,
-          showConfirmButton: false,
-        });
-      },
-      error: (error) => {
-        this.whatsappSending = false;
-        console.error('Error enviando WhatsApp:', error);
-
-        Swal.fire({
-          title: 'Error WhatsApp',
-          text: 'No se pudo enviar el código por WhatsApp. Intenta nuevamente.',
-          icon: 'error',
-        });
-      },
-    });
+  copySecret(): void {
+    if (this.totpSecret && navigator.clipboard) {
+      navigator.clipboard.writeText(this.totpSecret).then(() => {
+        this.copiedSecret = true;
+        setTimeout(() => (this.copiedSecret = false), 2500);
+      });
+    }
   }
 
   onVerifySms() {

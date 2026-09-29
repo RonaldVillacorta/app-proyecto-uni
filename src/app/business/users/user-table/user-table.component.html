@@ -247,9 +247,9 @@
           <i class="fas fa-credit-card mb-2"></i>
           <p class="mb-0">Sin créditos registrados</p>
         </div>
-        <div *ngFor="let credito of userCredits" class="cr-item-card mb-2">
+        <div *ngFor="let credito of userCredits; let i = index" class="cr-item-card mb-2">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="cr-item-title">Crédito #{{ credito.id }}</span>
+            <span class="cr-item-title">Crédito #{{ i + 1 }}</span>
             <span class="badge cr-status-badge" [ngClass]="getCreditStatusClass(credito.estado)">
               {{ credito.estado }}
             </span>
@@ -278,10 +278,10 @@
           <i class="fas fa-shopping-cart mb-2"></i>
           <p class="mb-0">Sin ventas registradas</p>
         </div>
-        <div *ngFor="let venta of userSales.slice(0, 3)" class="cr-item-card mb-2">
+        <div *ngFor="let venta of userSales.slice(0, 3); let i = index" class="cr-item-card mb-2">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <div>
-              <span class="cr-item-title">Venta #{{ venta.id }}</span>
+              <span class="cr-item-title">Venta #{{ i + 1 }}</span>
               <small class="d-block cr-address">{{ formatDate(venta.fechaVenta) }}</small>
             </div>
             <span class="badge cr-status-badge" [ngClass]="venta.tipoVenta === 'CONTADO' ? 'badge-success' : 'badge-primary'">

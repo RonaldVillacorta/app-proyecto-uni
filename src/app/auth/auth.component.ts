@@ -48,11 +48,14 @@ export class AuthComponent {
               email: response.email,
               isAdmin: response.isAdmin,
               tempToken: response.tempToken,
+              totpSecret: response.totpSecret,
+              totpUri: response.totpUri,
+              qrCodeUrl: response.qrCodeUrl,
             };
 
             Swal.fire({
-              title: 'Código 2FA Enviado',
-              text: 'Se ha enviado un código de verificación a tu teléfono',
+              title: 'Autenticación en 2 Pasos',
+              text: 'Ingresa el código de 6 dígitos de tu app Google Authenticator',
               icon: 'info',
               confirmButtonText: 'Continuar',
               confirmButtonColor: '#361E14',

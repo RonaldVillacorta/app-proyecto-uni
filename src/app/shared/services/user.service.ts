@@ -38,58 +38,15 @@ export class UserService {
   }
 
   /**
-   * Consulta el DNI a través del Backend seguro de Spring Boot (BFF).
-   * El token y las credenciales quedan protegidos en el servidor.
-   */
-  consultarDniApi(dni: string): Observable<any> {
-    const cached = localStorage.getItem(`dni_cache_${dni}`);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        // Solo reutilizar la caché si contiene la información oficial completa de SUNAT
-        if (parsed && parsed.success && parsed.sunat) {
-          return of(parsed);
-        }
-      } catch (_) {
-        localStorage.removeItem(`dni_cache_${dni}`);
-      }
-    }
-
-    return this.http.get<any>(`${this.url}/consulta-dni/${dni}`).pipe(
-      tap((res) => {
-        if (res && res.success && res.data) {
-          localStorage.setItem(`dni_cache_${dni}`, JSON.stringify(res));
-        }
-      })
-    );
-  }
-
-  /**
-   * Consulta RUC a través del Backend seguro de Spring Boot.
-   */
-  consultarRucApi(ruc: string): Observable<any> {
-    const cached = localStorage.getItem(`ruc_cache_${ruc}`);
-    if (cached) {
-      try {
-        return of(JSON.parse(cached));
-      } catch (_) {}
-    }
-
-    return this.http.get<any>(`${this.url}/consulta-ruc/${ruc}`).pipe(
-      tap((res) => {
-        if (res && res.success && res.data) {
-          localStorage.setItem(`ruc_cache_${ruc}`, JSON.stringify(res));
-        }
-      })
-    );
-  }
-
-  /**
    * Sube y procesa el reporte de deudas SBS con IA multimodal (PDF o Imagen).
+   * Si se especifica userId, evalúa al cliente seleccionado; de lo contrario, al perfil en sesión.
    */
-  subirReporteSbs(archivo: File): Observable<any> {
+  subirReporteSbs(archivo: File, userId?: number): Observable<any> {
     const formData = new FormData();
     formData.append('file', archivo);
+    if (userId) {
+      return this.http.post<any>(`${this.url}/${userId}/reporte-sbs`, formData);
+    }
     return this.http.post<any>(`${this.url}/profile/reporte-sbs`, formData);
   }
 }
