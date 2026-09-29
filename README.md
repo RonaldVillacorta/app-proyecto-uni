@@ -1,77 +1,104 @@
-# Cliente Web - Sistema de Gestión de Ventas, Créditos y Chatbot con IA
-
-Este proyecto es la aplicación cliente (frontend) construida con **Angular 19**. Funciona como la interfaz de usuario para el sistema de ventas, créditos y notificaciones, interactuando directamente con la API REST del backend de Spring Boot.
-
-Diseñado con un enfoque modular, brinda paneles interactivos con diseño responsivo para administradores y clientes.
-
----
-
-## 🚀 Características del Frontend
-
-*   **Autenticación de Dos Factores (2FA):** Flujo de login seguro con validación de credenciales (JWT) y verificación posterior mediante código SMS enviado por Twilio.
-*   **Panel de Administración (Admin Dashboard):**
-    *   Registro y administración de usuarios.
-    *   Gestión de ventas y planes de crédito automáticos.
-    *   Visualización de amortizaciones y control de cuotas.
-*   **Panel de Clientes (Client Dashboard):**
-    *   Seguimiento en tiempo real de compras realizadas.
-    *   Estado de créditos y calendario de vencimientos de cuotas.
-    *   Simulación y registro de pagos.
-*   **Interfaz de Chatbot Integrada:** Un widget de chat flotante en tiempo real que se conecta con la IA para soporte dinámico al usuario.
-*   **Descarga de Reportes PDF:** Módulos dedicados para descargar comprobantes de venta, de pagos y reportes generales generados por el servidor.
-*   **Seguridad en el Cliente:**
-    *   **Guards:** Protección de rutas según el rol (Admin/Cliente).
-    *   **Interceptor de Tokens:** Adjunta automáticamente el token JWT en las cabeceras de cada petición HTTP.
+# Frontend Web - Sistema de Gestión de Cuentas por Cobrar con Inteligencia Artificial
+**Tesis:** *Desarrollo de un sistema web basado en inteligencia artificial para mejorar la gestión de cuentas por cobrar en la microempresa Comercial Reyes, 2026*  
+**Autor:** Ronald Villacorta  
+**Entregable:** 1.2 · Repositorio en GitHub (Fase 1: Software)  
+**Versión / Tag:** `v1.0.0-entregable1`  
 
 ---
 
-## 🛠️ Tecnologías y Librerías
-
-*   **Framework Principal:** Angular 19.2.3
-*   **Lenguaje:** TypeScript / HTML5 / CSS3
-*   **Comunicación HTTP:** Angular HttpClient (con interceptores y reactividad basada en RxJS)
-*   **Gestor de Paquetes:** npm
+## 1. Descripción General
+Aplicación web cliente (Frontend SPA) construida con **Angular 19**. Ofrece una experiencia interactiva y moderna tanto para el Administrador de Comercial Reyes como para sus clientes compradores, conectándose a través de una API REST protegida por JWT y un microservicio de Inteligencia Artificial para el scoring crediticio.
 
 ---
 
-## 📂 Estructura del Proyecto
+## 2. Características Principales
 
-El código fuente principal está organizado bajo `src/app`:
+* **Seguridad y Doble Factor (2FA TOTP):** Acceso con credenciales encriptadas y desafío temporal de 6 dígitos mediante Google Authenticator o Telegram Bot (RFC 6238).
+* **Panel de Administración (Dashboard):**
+  * Tarjetas de resumen en tiempo real: Cuentas por cobrar, mora vencida, recaudación mensual y eficiencia de cobranza.
+* **Evaluación Crediticia con IA (Objetivo 3):**
+  * Carga de reportes de riesgo crediticio de la SBS en PDF o imagen.
+  * Visualización del Score Crediticio (0 a 100 puntos), semáforo de riesgo y límite de dinero sugerido.
+* **Gestión de Ventas y Créditos:**
+  * Registro ágil de ventas al contado, fiadas o a crédito.
+  * Cálculo dinámico de subtotales, cuotas y fechas de vencimiento.
+* **Auditoría de Pagos y Validación Yape:**
+  * Bandeja de comprobantes digitales de Yape con vistas para: *Pendientes*, *Aprobados*, *Rechazados* y *Todos*.
+  * Inspección visual directa de fotos alojadas en Cloudinary.
+* **Directorio y Perfil Integral del Cliente:**
+  * Ficha en 5 pestañas: *Resumen*, *Compras*, *Cuentas*, *Pagos* e *Historial SBS*.
+* **Portal del Cliente (Autogestión):**
+  * Consulta personal de cupo disponible, compras, desglose de artículos y pago de cuotas con código QR oficial de Yape.
+* **Asistente Virtual Chatbot con IA:**
+  * Widget de conversación interactiva con sugerencias rápidas («¿Quién no paga?») y respuestas dinámicas.
+
+---
+
+## 3. Tecnologías Utilizadas
+
+* **Framework:** Angular 19 (Arquitectura Standalone y Módulos Reactivos)
+* **Lenguaje:** TypeScript 5.x / HTML5 / CSS3
+* **Estilos y Componentes:** Bootstrap 5 y AdminLTE 3
+* **Librerías de Notificación:** SweetAlert2
+* **Manejo de Estados y Asincronía:** RxJS
+
+---
+
+## 4. Estructura del Proyecto
 
 ```text
-├── auth/                 # Componente de Login y autenticación inicial
-├── business/             # Vistas de negocio organizadas por rol
-│   ├── admin/            # Dashboards de administración, ventas y créditos
-│   ├── cliente/          # Dashboards de cliente, compras, cuotas y pagos
-│   └── profile/          # Vista y edición del perfil del usuario
-├── chatbot/              # Componente y diseño de la interfaz del Chatbot de IA
-├── guards/               # Guardianes de ruta para restringir acceso no autorizado
-├── interceptors/         # Interceptor para inyección del token Bearer JWT
-├── shared/               # Componentes compartidos, interfaces y servicios API
-│   ├── models/           # Interfaces y modelos TypeScript (User, Venta, Pago, etc.)
-│   └── services/         # Servicios de Angular para consumo de APIs REST
-└── verify-sms/           # Pantalla de verificación de segundo factor de seguridad
+app-proyecto-uni/
+├── src/
+│   ├── app/
+│   │   ├── auth/                 # Componente de inicio de sesión
+│   │   ├── business/
+│   │   │   ├── admin/            # Vistas administrativas
+│   │   │   │   ├── admin-ventas/ # Catálogo y auditoría de pagos Yape
+│   │   │   │   ├── cobranzas/    # Bandeja de mora y semáforo de retraso
+│   │   │   │   ├── dashboard/    # Panel principal con KPIs
+│   │   │   │   ├── evaluacion-ia/# Carga de SBS y resultados del score
+│   │   │   │   ├── nueva-venta/  # Formulario interactivo de venta
+│   │   │   │   ├── user/         # Directorio maestro de clientes
+│   │   │   │   ├── user-detail/  # Perfil de 5 pestañas del cliente
+│   │   │   │   └── user-form/    # Registro de nuevos clientes con sueldo
+│   │   │   └── cliente/          # Portal del cliente (dashboard, compras, Yape)
+│   │   ├── guards/               # Protección de rutas por roles (ADMIN / CLIENTE)
+│   │   ├── interceptors/         # Inyección automática del Bearer JWT
+│   │   ├── shared/
+│   │   │   ├── components/       # Chatbot virtual y barras de navegación
+│   │   │   └── services/         # Servicios HTTP (Auth, Venta, Cuota, Pago, IA)
+│   │   └── verify-sms/           # Desafío de código de seguridad 2FA
+│   ├── assets/                   # Recursos visuales y estilos globales
+│   └── index.html                # Plantilla base SPA
+├── angular.json                  # Configuración de compilación y empaquetado
+├── package.json                  # Dependencias y scripts de ejecución
+└── Dockerfile                    # Empaquetado de producción con Nginx Alpine
 ```
 
 ---
 
-## ⚙️ Configuración y Ejecución Local
+## 5. Instalación y Ejecución Local
 
-### 1. Requisitos previos
-Es necesario tener instalado **Node.js** (versión v18 o superior recomendada) y **Angular CLI**.
+### Prerrequisitos
+* Node.js v18 o superior
+* npm v9 o superior
+* Angular CLI v19 (`npm install -g @angular/cli`)
 
-### 2. Instalar dependencias
-Ubicado en la raíz del proyecto frontend, instalá las dependencias necesarias:
+### Pasos de Instalación
 ```bash
+# 1. Clonar el repositorio
+git clone https://github.com/AnonyMovsJs/app-proyecto-uni.git
+cd app-proyecto-uni
+
+# 2. Instalar dependencias
 npm install
-```
 
-### 3. Levantar el servidor de desarrollo
-Para iniciar la aplicación localmente en modo desarrollo, ejecutá:
-```bash
-ng serve
+# 3. Iniciar el servidor de desarrollo
+ng serve --open
 ```
-Una vez levantado, ingresá desde tu navegador a: `http://localhost:4200/`.
+La aplicación web se abrirá automáticamente en [http://localhost:4200](http://localhost:4200).
 
 ---
 
+## 6. Licencia
+Este proyecto se distribuye bajo la licencia **MIT License**. Consulta el archivo [LICENSE](LICENSE) para más información.
